@@ -396,6 +396,7 @@ final class PaintCollector implements CompletionListener {
                 if (ws != null) {
                     final ViewScene vs = ws.getViewScene();
 
+                  if(vs != null) {
                     // Check to see if this scene is in our dirty list.  If so, we will need to render
                     // the scene before we recopy it to the screen.  If not, we can skip this step.
                     if (dirtyScenes.indexOf(vs) != -1) {
@@ -415,6 +416,11 @@ final class PaintCollector implements CompletionListener {
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }
+                  } else {
+                      allWorkCompletedLatch.countDown();
+                  }
+                } else {
+                    allWorkCompletedLatch.countDown();
                 }
             }
         } else {
