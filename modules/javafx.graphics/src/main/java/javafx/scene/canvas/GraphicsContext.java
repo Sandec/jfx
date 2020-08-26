@@ -2965,8 +2965,6 @@ public final class GraphicsContext {
      * @param e the effect to use, or null to disable effects
      */
     public void setEffect(Effect e) {
-        GrowableDataBuffer buf = getBuffer();
-        buf.putByte(NGCanvas.EFFECT);
         if (e == null) {
             if(curState.effect != null) {
                 GrowableDataBuffer buf = getBuffer();
