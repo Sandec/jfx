@@ -183,6 +183,13 @@ public final class QuantumToolkit extends Toolkit {
                 return result;
             });
 
+    private static boolean renderOnlySnapshots =
+            AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
+                Boolean result = Boolean.getBoolean("quantum.renderonlysnapshots");
+                return result;
+            });
+
+
     private static boolean noRenderJobs =
             AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
                 Boolean result = Boolean.getBoolean("quantum.norenderjobs");
@@ -452,8 +459,12 @@ public final class QuantumToolkit extends Toolkit {
     }
 
     @Override public Future addRenderJob(RenderJob r) {
+        return addRenderJob(r,false);
+    }
+
+    public Future addRenderJob(RenderJob r, boolean isSnapshot){
         // Do not run any render jobs (this is for benchmarking only)
-        if (noRenderJobs) {
+        if (noRenderJobs || (!isSnapshot && renderOnlySnapshots)) {
             CompletionListener listener = r.getCompletionListener();
             if (r instanceof PaintRenderJob) {
                 ((PaintRenderJob)r).getScene().setPainting(false);
@@ -1543,7 +1554,7 @@ public final class QuantumToolkit extends Toolkit {
 
         final CountDownLatch latch = new CountDownLatch(1);
         re.setCompletionListener(job -> latch.countDown());
-        addRenderJob(re);
+        addRenderJob(re, true);
 
         do {
             try {
