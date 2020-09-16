@@ -1609,7 +1609,7 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
             key  = BINTRAY_KEY
         }
         if (project.name == 'base') {
-            publications = ['javafx']
+            publications = ['javafx','maven']
         } else {
             publications = ['maven']
         }
