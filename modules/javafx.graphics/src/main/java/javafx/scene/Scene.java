@@ -596,6 +596,7 @@ public class Scene implements EventTarget {
 
     private List<Runnable> preLayoutPulseListeners;
     private List<Runnable> postLayoutPulseListeners;
+    private List<Runnable> preRenderPulseListeners;
 
     /**
      * Adds a new scene pre layout pulse listener to this scene. Every time a pulse occurs,
@@ -690,6 +691,19 @@ public class Scene implements EventTarget {
         postLayoutPulseListeners.add(r);
     }
 
+    public final void addPreRenderPulseListener(Runnable r) {
+        Toolkit.getToolkit().checkFxUserThread();
+
+        if (r == null) {
+            throw new NullPointerException("Scene pulse listener should not be null");
+        }
+        if (preRenderPulseListeners == null) {
+            preRenderPulseListeners = new CopyOnWriteArrayList<>();
+        }
+        preRenderPulseListeners.add(r);
+    }
+
+
     /**
      * Removes a previously registered scene post layout pulse listener from listening to
      * pulses in this scene. This method does nothing if the specified Runnable is
@@ -712,6 +726,15 @@ public class Scene implements EventTarget {
             return;
         }
         postLayoutPulseListeners.remove(r);
+    }
+
+    public final void removePreRenderPulseListener(Runnable r) {
+        Toolkit.getToolkit().checkFxUserThread();
+
+        if (preRenderPulseListeners == null) {
+            return;
+        }
+        preRenderPulseListeners.remove(r);
     }
 
     /**
@@ -2526,6 +2549,13 @@ public class Scene implements EventTarget {
 
             // required for image cursor created from animated image
             Scene.this.mouseHandler.updateCursorFrame();
+
+            if (preRenderPulseListeners != null) {
+                for (Runnable r : preRenderPulseListeners) {
+                    r.run();
+                }
+            }
+
 
             if (firstPulse) {
                 if (PerformanceTracker.isLoggingEnabled()) {
