@@ -1,3 +1,17 @@
+# Publish:
+1.
+`./gradlew sdk graphics:publishToMavenLocal base:publishToMavenLocal`
+
+2. publish all local:`
+   `./gradlew publishToMavenLocal`
+
+3. publish online
+   `./gradlew clean sdk bintrayUpload`
+
+4. clear cache (optional) (tested for sbt)
+   `find ~/.m2 ~/.ivy2 ~/.gradle | grep openjfx | grep jpro | xargs rm -r`
+   
+
 # OpenJFX
 
 OpenJFX is an open source, next generation client application platform for desktop, mobile and embedded systems based on JavaSE. It is a collaborative effort by many individuals and companies with the goal of producing a modern, efficient, and fully featured toolkit for developing rich client applications. This is the open source project where we develop JavaFX.
