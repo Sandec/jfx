@@ -6,7 +6,7 @@
    `./gradlew publishToMavenLocal`
 
 3. publish online
-   `./gradlew clean sdk bintrayUpload`
+   `./gradlew clean sdk publish`
 
 4. clear cache (optional) (tested for sbt)
    `find ~/.m2 ~/.ivy2 ~/.gradle | grep openjfx | grep jpro | xargs rm -r`
