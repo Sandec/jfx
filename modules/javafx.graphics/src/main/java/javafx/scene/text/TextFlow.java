@@ -318,37 +318,40 @@ public class TextFlow extends Pane {
 
     @Override protected void layoutChildren() {
         inLayout = true;
-        Insets insets = getInsets();
-        double top = snapSpaceY(insets.getTop());
-        double left = snapSpaceX(insets.getLeft());
+        try {
+            Insets insets = getInsets();
+            double top = snapSpaceY(insets.getTop());
+            double left = snapSpaceX(insets.getLeft());
 
-        GlyphList[] runs = getTextLayout().getRuns();
-        for (int j = 0; j < runs.length; j++) {
-            GlyphList run = runs[j];
-            TextSpan span = run.getTextSpan();
-            if (span instanceof EmbeddedSpan) {
-                Node child = ((EmbeddedSpan)span).getNode();
-                Point2D location = run.getLocation();
-                double baselineOffset = -run.getLineBounds().getMinY();
+            GlyphList[] runs = getTextLayout().getRuns();
+            for (int j = 0; j < runs.length; j++) {
+                GlyphList run = runs[j];
+                TextSpan span = run.getTextSpan();
+                if (span instanceof EmbeddedSpan) {
+                    Node child = ((EmbeddedSpan)span).getNode();
+                    Point2D location = run.getLocation();
+                    double baselineOffset = -run.getLineBounds().getMinY();
 
-                layoutInArea(child, left + location.x, top + location.y,
-                             run.getWidth(), run.getHeight(),
-                             baselineOffset, null, true, true,
-                             HPos.CENTER, VPos.BASELINE);
+                    layoutInArea(child, left + location.x, top + location.y,
+                            run.getWidth(), run.getHeight(),
+                            baselineOffset, null, true, true,
+                            HPos.CENTER, VPos.BASELINE);
+                }
             }
-        }
 
-        List<Node> managed = getManagedChildren();
-        for (Node node: managed) {
-            if (node instanceof Text) {
-                Text text = (Text)node;
-                text.layoutSpan(runs);
-                BaseBounds spanBounds = text.getSpanBounds();
-                text.relocate(left + spanBounds.getMinX(),
-                              top + spanBounds.getMinY());
+            List<Node> managed = getManagedChildren();
+            for (Node node: managed) {
+                if (node instanceof Text) {
+                    Text text = (Text)node;
+                    text.layoutSpan(runs);
+                    BaseBounds spanBounds = text.getSpanBounds();
+                    text.relocate(left + spanBounds.getMinX(),
+                            top + spanBounds.getMinY());
+                }
             }
+        } finally {
+            inLayout = false;
         }
-        inLayout = false;
     }
 
     private PathElement[] getRange(int start, int end, int type) {
