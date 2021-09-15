@@ -747,7 +747,7 @@ public final class GraphicsContext {
         updateTransform();
         GrowableDataBuffer buf = getBuffer();
         writeRectParams(buf, dx, dy, dw, dh, NGCanvas.DRAW_IMAGE);
-        buf.putObject(platformImg);
+        buf.putObject(img);
     }
 
     private void writeImage(Image img,
@@ -764,7 +764,7 @@ public final class GraphicsContext {
         buf.putFloat((float) sy);
         buf.putFloat((float) sw);
         buf.putFloat((float) sh);
-        buf.putObject(platformImg);
+        buf.putObject(img);
     }
 
     private void writeText(String text, double x, double y, double maxWidth,
@@ -823,8 +823,9 @@ public final class GraphicsContext {
         // But, do a reset anyway if the rendering layer has been falling
         // behind because that lets the synchronization step throw out the
         // older buffers that have been backing up.
-        if (buf.writeValuePosition() > Canvas.DEFAULT_VAL_BUF_SIZE ||
-            theCanvas.isRendererFallingBehind())
+        if (true) // We always reset with JPro, because fewer commamds is very important for JPro
+        // buf.writeValuePosition() > Canvas.DEFAULT_VAL_BUF_SIZE || // THIS IS DARK MAGIC - and should be changed in fx!
+        // theCanvas.isRendererFallingBehind())
         {
             buf.reset();
             buf.putByte(NGCanvas.RESET);
@@ -1442,8 +1443,10 @@ public final class GraphicsContext {
         // Per W3C spec: On setting, infinite, and NaN
         // values must be ignored, leaving the value unchanged
         if (dashOffset > Double.NEGATIVE_INFINITY && dashOffset < Double.POSITIVE_INFINITY) {
-            curState.dashOffset = dashOffset;
-            writeParam(dashOffset, NGCanvas.DASH_OFFSET);
+            if(dashOffset != curState.dashOffset) {
+                curState.dashOffset = dashOffset;
+                writeParam(dashOffset, NGCanvas.DASH_OFFSET);
+            }
         }
     }
 
@@ -2959,12 +2962,16 @@ public final class GraphicsContext {
      * @param e the effect to use, or null to disable effects
      */
     public void setEffect(Effect e) {
-        GrowableDataBuffer buf = getBuffer();
-        buf.putByte(NGCanvas.EFFECT);
         if (e == null) {
-            curState.effect = null;
-            buf.putObject(null);
+            if(curState.effect != null) {
+                GrowableDataBuffer buf = getBuffer();
+                buf.putByte(NGCanvas.EFFECT);
+                curState.effect = null;
+                buf.putObject(null);
+            }
         } else {
+            GrowableDataBuffer buf = getBuffer();
+            buf.putByte(NGCanvas.EFFECT);
             curState.effect = EffectHelper.copy(e);
             EffectHelper.sync(curState.effect);
             buf.putObject(EffectHelper.getPeer(curState.effect));
