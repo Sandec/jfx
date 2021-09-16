@@ -386,7 +386,10 @@ public class Text extends Shape {
         if (textRuns != null) return textRuns;
         if (isSpan()) {
             /* List of run is initialized when the TextFlow layout the children */
-            getParent().layout();
+            /*getParent().layout();
+            if(textRuns == null) {
+                throw new RuntimeException("flow textRuns was null");
+            }*/
         } else {
             TextLayout layout = getTextLayout();
             textRuns = layout.getRuns();
