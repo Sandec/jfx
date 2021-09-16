@@ -356,7 +356,7 @@ public class Text extends Shape {
     BaseBounds getSpanBounds() {
         if (spanBoundsInvalid) {
             GlyphList[] runs = getRuns();
-            if (runs.length != 0) {
+            if (runs != null && runs.length != 0) {
                 float left = Float.POSITIVE_INFINITY;
                 float top = Float.POSITIVE_INFINITY;
                 float right = 0;
@@ -385,7 +385,10 @@ public class Text extends Shape {
         if (textRuns != null) return textRuns;
         if (isSpan()) {
             /* List of run is initialized when the TextFlow layout the children */
-            getParent().layout();
+            /*getParent().layout();
+            if(textRuns == null) {
+                throw new RuntimeException("flow textRuns was null");
+            }*/
         } else {
             TextLayout layout = getTextLayout();
             textRuns = layout.getRuns();
