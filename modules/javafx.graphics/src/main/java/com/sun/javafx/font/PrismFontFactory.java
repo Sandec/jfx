@@ -72,6 +72,8 @@ public abstract class PrismFontFactory implements FontFactory {
     private static final String DW_FACTORY = "com.sun.javafx.font.directwrite.DWFactory";
     private static final String FT_FACTORY = "com.sun.javafx.font.freetype.FTFactory";
 
+    static boolean useLogicFonts = true;
+
     /* We need two maps. One to hold pointers to the raw fonts, another
      * to hold pointers to the composite resources. Top level look ups
      * to createFont() will look first in the compResourceMap, and
@@ -1687,11 +1689,13 @@ public abstract class PrismFontFactory implements FontFactory {
             fileToFontMap = new HashMap<>(100);
 
             if (isWindows) {
-                getPlatformFontDirs();
-                populateFontFileNameMap(tmpFontToFileMap,
-                                        fontToFamilyNameMap,
-                                        familyToFontListMap,
-                                        Locale.ENGLISH);
+                if (!useLogicFonts) {
+                    getPlatformFontDirs();
+                    populateFontFileNameMap(tmpFontToFileMap,
+                            fontToFamilyNameMap,
+                            familyToFontListMap,
+                            Locale.ENGLISH);
+                }
 
                 if (debugFonts) {
                     System.err.println("Windows Locale ID=" + getSystemLCID());
@@ -1701,9 +1705,18 @@ public abstract class PrismFontFactory implements FontFactory {
                                 familyToFontListMap);
                 }
 
-                resolveWindowsFonts(tmpFontToFileMap,
-                                    fontToFamilyNameMap,
-                                    familyToFontListMap);
+                if(!useLogicFonts) {
+                    resolveWindowsFonts(tmpFontToFileMap,
+                                        fontToFamilyNameMap,
+                                        familyToFontListMap);
+                }
+
+                if(useLogicFonts) {
+                    FontConfigManager.populateMaps(tmpFontToFileMap,
+                            fontToFamilyNameMap,
+                            familyToFontListMap,
+                            Locale.getDefault());
+                }
 
                 if (debugFonts) {
                     logFontInfo(" *** WINDOWS FONTS AFTER RESOLVING",
@@ -1713,16 +1726,24 @@ public abstract class PrismFontFactory implements FontFactory {
                 }
 
             } else if (isMacOSX || isIOS) {
-                MacFontFinder.populateFontFileNameMap(tmpFontToFileMap,
-                                                      fontToFamilyNameMap,
-                                                      familyToFontListMap,
-                                                      Locale.ENGLISH);
-
+                System.out.println("PrismFontFactory - FontConfigManager.populateMaps!!!!");
+                if(useLogicFonts) {
+                    FontConfigManager.populateMaps(tmpFontToFileMap,
+                            fontToFamilyNameMap,
+                            familyToFontListMap,
+                            Locale.getDefault());
+                }
+                if(!useLogicFonts) {
+                    MacFontFinder.populateFontFileNameMap(tmpFontToFileMap,
+                            fontToFamilyNameMap,
+                            familyToFontListMap,
+                            Locale.ENGLISH);
+                }
                 if (debugFonts) {
-                    logFontInfo(" *** MACOS LOCATED FONTS:",
-                                tmpFontToFileMap,
-                                fontToFamilyNameMap,
-                                familyToFontListMap);
+                    logFontInfo(" *** FONTCONFIG LOCATED FONTS:",
+                            tmpFontToFileMap,
+                            fontToFamilyNameMap,
+                            familyToFontListMap);
                 }
             } else if (isLinux) {
                 FontConfigManager.populateMaps(tmpFontToFileMap,
