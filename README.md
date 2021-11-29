@@ -20,17 +20,9 @@ OpenJFX is free software, licensed under [GPL v2 with the Classpath exception](L
 
 OpenJFX is a project under the charter of the OpenJDK. The [OpenJDK Bylaws](https://openjdk.java.net/bylaws) and [License](LICENSE) govern our work. The OpenJFX project membership can be found on the [OpenJDK Census](https://openjdk.java.net/census#openjfx). We welcome patches and involvement from individual contributors or companies. If this is your first time contributing to an OpenJDK project, you will need to review the rules on [becoming a Contributor](https://openjdk.java.net/bylaws#contributor), and sign the [Oracle Contributor Agreement](https://www.oracle.com/technetwork/community/oca-486395.html) (OCA).
 
-## Issue tracking
-
-If you think you have found a bug in OpenJFX, first make sure that you are testing against the latest version - your issue may already have been fixed. If not, search our [issues list](https://bugs.openjdk.java.net) in the Java Bug System (JBS) in case a similar issue has already been opened. More information on where and how to report a bug can be found at [bugreport.java.com](https://bugreport.java.com/).
-
-## Getting Started
-
-For instructions on building JavaFX, see the [Building OpenJFX](https://wiki.openjdk.java.net/display/OpenJFX/Building+OpenJFX) Wiki page.
-
-For information about downloading and using JavaFX, see the [JavaFX community site](https://openjfx.io/).
+This repository has the source code for OpenJFX 17 Update Releases. The main repository for OpenJFX development is [https://github.com/openjdk/jfx](https://github.com/openjdk/jfx).
 
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting backport pull requests to OpenJFX 17. If you are looking to contribute to OpenJFX, please visit [openjdk/jfx](https://github.com/openjdk/jfx) instead.

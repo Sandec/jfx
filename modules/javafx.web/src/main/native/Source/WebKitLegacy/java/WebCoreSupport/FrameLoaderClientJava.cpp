@@ -220,6 +220,13 @@ void FrameLoaderClientJava::dispatchDidNavigateWithinPage()
                   1.0 /* progress */);
 }
 
+// Called from twkInit to initialize the client. This will ensure that
+// the page field is initialized before any operation that needs it
+void FrameLoaderClientJava::init()
+{
+    (void)page();
+}
+
 Page* FrameLoaderClientJava::page()
 {
     if (!m_page) {
@@ -511,13 +518,6 @@ void FrameLoaderClientJava::redirectDataToPlugin(Widget&)
     notImplemented();
 }
 
-RefPtr<Widget> FrameLoaderClientJava::createJavaAppletWidget(const IntSize&, HTMLAppletElement&, const URL&,
-                                                      const Vector<String>&, const Vector<String>&)
-{
-    notImplemented();
-    return nullptr;
-}
-
 ObjectContentType FrameLoaderClientJava::objectContentType(const URL& url, const String& mimeType)
 {
     //copied from FrameLoaderClientEfl.cpp
@@ -802,7 +802,7 @@ void FrameLoaderClientJava::restoreViewState()
     notImplemented();
 }
 
-Frame* FrameLoaderClientJava::dispatchCreatePage(const NavigationAction& action)
+Frame* FrameLoaderClientJava::dispatchCreatePage(const NavigationAction& action, NewFrameOpenerPolicy)
 {
     Page* webPage = frame()->page();
     if (!webPage)
