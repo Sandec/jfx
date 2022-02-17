@@ -561,8 +561,10 @@ public class Image {
         return platformImage;
     }
 
+    public Runnable onDirty = null;
     void pixelsDirty() {
         platformImagePropertyImpl().fireValueChangedEvent();
+        if(onDirty != null) onDirty.run();
     }
 
     private final class ObjectPropertyImpl<T>
