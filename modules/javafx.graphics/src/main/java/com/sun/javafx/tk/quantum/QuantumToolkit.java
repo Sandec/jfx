@@ -1132,7 +1132,7 @@ public final class QuantumToolkit extends Toolkit {
         int intX = (int)x + pImage.getMinX();
         int intY = (int)y + pImage.getMinY();
 
-        if (pImage.isOpaque()) {
+        if (pImage.isOpaque() || pImage.getPixelBuffer() == null) {
             return true;
         }
 
