@@ -376,7 +376,7 @@ ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.
 defineProperty("COMPILE_MEDIA", "false")
-ext.IS_COMPILE_MEDIA = Boolean.parseBoolean(COMPILE_MEDIA)
+ext.IS_COMPILE_MEDIA = true //Boolean.parseBoolean(COMPILE_MEDIA)
 
 // BUILD_LIBAV_STUBS specifies whether to download and build libav/ffmpeg libraries
 defineProperty("BUILD_LIBAV_STUBS", "false")
@@ -559,12 +559,13 @@ def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd-HHmmss").format(
 defineProperty("BUILD_TIMESTAMP", buildTimestamp)
 def relSuffix = ""
 def relOpt = ""
-if (HUDSON_JOB_NAME == "not_hudson") {
+/*if (HUDSON_JOB_NAME == "not_hudson") {
     relSuffix = "-internal"
     relOpt = "-${buildTimestamp}"
 } else {
     relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
-}
+}*/
+relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
 defineProperty("RELEASE_SUFFIX", relSuffix)
 defineProperty("RELEASE_VERSION_SHORT", "${RELEASE_VERSION}${RELEASE_SUFFIX}")
 defineProperty("RELEASE_VERSION_LONG", "${RELEASE_VERSION_SHORT}+${PROMOTED_BUILD_NUMBER}${relOpt}")
