@@ -2603,6 +2603,7 @@ project(":swt") {
                 // for the sake of the IDEs we need to have a single stable name that works
                 // on every platform
                 copy {
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                     into libsDir
                     from f.getParentFile()
                     include "**/*swt*.jar"
