@@ -547,7 +547,7 @@ public abstract class PrismFontFile implements FontResource, FontConstants {
                     (table.offset + table.length < table.length) ||
                     (table.offset + table.length > filesize))
                 {
-                    throw new Exception("bad table, tag="+table.tag);
+                    throw new Exception("bad table, tag="+table.tag+" filename="+filename);
                 }
             }
 
