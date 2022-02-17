@@ -1598,13 +1598,11 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
     project.publishing {
         repositories {
             maven {
-                def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : ""
-                def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : ""
-                def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : ""
-                url repositoryUrl
+                name = "artifactory"
+                url = "https://sandec.jfrog.io/artifactory/repo"
                 credentials {
-                   username repositoryUsername
-                   password repositoryPassword
+                    username System.getenv("SANDEC_ARTIFACTORY_USERNAME")
+                    password System.getenv("SANDEC_ARTIFACTORY_PASSWORD")
                 }
             }
         }
