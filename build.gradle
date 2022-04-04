@@ -376,7 +376,7 @@ defineProperty("COMPILE_WEBKIT", "false")
 ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.
-defineProperty("COMPILE_MEDIA", "false")
+defineProperty("COMPILE_MEDIA", "true")
 ext.IS_COMPILE_MEDIA = Boolean.parseBoolean(COMPILE_MEDIA)
 
 // BUILD_LIBAV_STUBS specifies whether to download and build libav/ffmpeg libraries
@@ -464,7 +464,7 @@ ext.IS_DEBUG_NATIVE = CONF == "DebugNative"
 ext.IS_RELEASE = !ext.IS_DEBUG_JAVA
 
 // Specifies whether to enable the Maven publishing tasks
-defineProperty("MAVEN_PUBLISH", "false")
+defineProperty("MAVEN_PUBLISH", "true")
 ext.IS_MAVEN_PUBLISH = Boolean.parseBoolean(MAVEN_PUBLISH)
 
 // Defines the compiler warning levels to use. If empty, then no warnings are generated. If
@@ -558,12 +558,15 @@ def buildTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd-HHmmss").format(
 defineProperty("BUILD_TIMESTAMP", buildTimestamp)
 def relSuffix = ""
 def relOpt = ""
+/*
 if (HUDSON_JOB_NAME == "not_hudson") {
     relSuffix = "-internal"
     relOpt = "-${buildTimestamp}"
 } else {
     relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
 }
+}*/
+relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
 defineProperty("RELEASE_SUFFIX", relSuffix)
 defineProperty("RELEASE_VERSION_SHORT", "${RELEASE_VERSION}${RELEASE_SUFFIX}")
 defineProperty("RELEASE_VERSION_LONG", "${RELEASE_VERSION_SHORT}+${PROMOTED_BUILD_NUMBER}${relOpt}")
@@ -1207,7 +1210,9 @@ compileTargets { t ->
     if (!targetProperties.containsKey('includeSWT')) targetProperties.includeSWT = true
     if (!targetProperties.containsKey('includeSwing')) targetProperties.includeSwing = true
     if (!targetProperties.containsKey('includeNull3d')) targetProperties.includeNull3d = true
-    if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = false
+    //if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = false
+    // JPro, let's always include monocle
+    targetProperties.includeMonocle = true
     if (!targetProperties.containsKey('includeEGL')) targetProperties.includeEGL = false
 
     if (!targetProperties.containsKey('includeGTK')) targetProperties.includeGTK = IS_LINUX
@@ -1610,13 +1615,11 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
     project.publishing {
         repositories {
             maven {
-                def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : ""
-                def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : ""
-                def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : ""
-                url repositoryUrl
+                name = "artifactory"
+                url = "https://sandec.jfrog.io/artifactory/repo"
                 credentials {
-                   username repositoryUsername
-                   password repositoryPassword
+                    username System.getenv("SANDEC_ARTIFACTORY_USERNAME")
+                    password System.getenv("SANDEC_ARTIFACTORY_PASSWORD")
                 }
             }
         }
@@ -2701,6 +2704,7 @@ project(":swt") {
                 // for the sake of the IDEs we need to have a single stable name that works
                 // on every platform
                 copy {
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                     into libsDir
                     from f.getParentFile()
                     include "**/*swt*.jar"

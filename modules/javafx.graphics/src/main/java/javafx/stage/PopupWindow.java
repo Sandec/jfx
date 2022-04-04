@@ -746,7 +746,7 @@ public abstract class PopupWindow extends Window {
         double anchorScrMinX = newAnchorX - anchorDeltaX;
         double anchorScrMinY = newAnchorY - anchorDeltaY;
 
-        if (autofixActive) {
+        if (false /*autofixActive*/) {
             final Screen currentScreen =
                     Utils.getScreenForPoint(newAnchorX, newAnchorY);
             final Rectangle2D screenBounds =

@@ -62,6 +62,7 @@ import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
@@ -544,6 +545,7 @@ public class Scene implements EventTarget {
                 dirtyNodes = tmp;
             }
             dirtyNodes[dirtyNodesSize++] = n;
+            checkCleanDirtyNodes();
         }
     }
 
@@ -599,6 +601,7 @@ public class Scene implements EventTarget {
 
     private List<Runnable> preLayoutPulseListeners;
     private List<Runnable> postLayoutPulseListeners;
+    private List<Runnable> preRenderPulseListeners;
 
     /**
      * Adds a new scene pre layout pulse listener to this scene. Every time a pulse occurs,
@@ -693,6 +696,19 @@ public class Scene implements EventTarget {
         postLayoutPulseListeners.add(r);
     }
 
+    public final void addPreRenderPulseListener(Runnable r) {
+        Toolkit.getToolkit().checkFxUserThread();
+
+        if (r == null) {
+            throw new NullPointerException("Scene pulse listener should not be null");
+        }
+        if (preRenderPulseListeners == null) {
+            preRenderPulseListeners = new CopyOnWriteArrayList<>();
+        }
+        preRenderPulseListeners.add(r);
+    }
+
+
     /**
      * Removes a previously registered scene post layout pulse listener from listening to
      * pulses in this scene. This method does nothing if the specified Runnable is
@@ -715,6 +731,30 @@ public class Scene implements EventTarget {
             return;
         }
         postLayoutPulseListeners.remove(r);
+    }
+
+    public final void removePreRenderPulseListener(Runnable r) {
+        Toolkit.getToolkit().checkFxUserThread();
+
+        if (preRenderPulseListeners == null) {
+            return;
+        }
+        preRenderPulseListeners.remove(r);
+    }
+
+    private boolean cleanupAdded = false;
+    private TKPulseListener cleanupListener = () -> {
+        cleanupAdded = false;
+        // JDK-8269907 - This is important, to avoid memoryleaks in dirtyNodes and Parent.removed
+        synchronizeSceneNodesWithLock();
+    };
+    private void checkCleanDirtyNodes() {
+        if(!cleanupAdded) {
+            if((window.get() == null || !window.get().isShowing()) && dirtyNodesSize > 0) {
+                Toolkit.getToolkit().addCleanupListener(cleanupListener);
+                cleanupAdded = true;
+            }
+        }
     }
 
     /**
@@ -1264,6 +1304,10 @@ public class Scene implements EventTarget {
         // we do not need pulse in the snapshot code
         // because this scene can be stage-less
         doLayoutPass();
+        synchronizeSceneNodesWithLock();
+    }
+
+    private void synchronizeSceneNodesWithLock() {
 
         getRoot().updateBounds();
         if (peer != null) {
@@ -2549,6 +2593,12 @@ public class Scene implements EventTarget {
 
             // required for image cursor created from animated image
             Scene.this.mouseHandler.updateCursorFrame();
+
+            if (preRenderPulseListeners != null) {
+                for (Runnable r : preRenderPulseListeners) {
+                    r.run();
+                }
+            }
 
             if (firstPulse) {
                 if (PerformanceTracker.isLoggingEnabled()) {
@@ -4065,17 +4115,22 @@ public class Scene implements EventTarget {
 
         private void windowForSceneChanged(Window oldWindow, Window window) {
             if (oldWindow != null) {
+                oldWindow.showingProperty().removeListener(sceneWindowShowingListener);
                 oldWindow.focusedProperty().removeListener(sceneWindowFocusedListener);
             }
 
             if (window != null) {
+                window.showingProperty().addListener(sceneWindowShowingListener);
                 window.focusedProperty().addListener(sceneWindowFocusedListener);
                 setWindowFocused(window.isFocused());
             } else {
                 setWindowFocused(false);
             }
+
+            checkCleanDirtyNodes();
         }
 
+        private final ChangeListener<Boolean> sceneWindowShowingListener = (p, o, n) -> {checkCleanDirtyNodes(); } ;
         private final InvalidationListener sceneWindowFocusedListener = valueModel -> setWindowFocused(((ReadOnlyBooleanProperty)valueModel).get());
 
         private void process(KeyEvent e) {

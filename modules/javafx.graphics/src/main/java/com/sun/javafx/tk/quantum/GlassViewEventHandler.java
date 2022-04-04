@@ -865,7 +865,7 @@ class GlassViewEventHandler extends View.EventHandler {
                     }
                     if (QuantumToolkit.drawInPaint && w != null && w.isVisible()) {
                         WindowStage stage = scene.getWindowStage();
-                        if (stage != null) {
+                        if (stage != null && !QuantumToolkit.noRenderJobs && !QuantumToolkit.renderOnlySnapshots) {
                             collector.liveRepaintRenderJob(scene);
                         }
                     }
@@ -883,7 +883,7 @@ class GlassViewEventHandler extends View.EventHandler {
                         scene.updateSceneState();
                         return null;
                     });
-                    if (QuantumToolkit.liveResize && w != null && w.isVisible()) {
+                    if (QuantumToolkit.liveResize && w != null && w.isVisible() && !QuantumToolkit.noRenderJobs && !QuantumToolkit.renderOnlySnapshots) {
                         WindowStage stage = scene.getWindowStage();
                         if (stage != null) {
                             collector.liveRepaintRenderJob(scene);
