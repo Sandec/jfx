@@ -412,6 +412,8 @@ if (IS_STATIC_BUILD && IS_COMPILE_MEDIA) {
 // aarch64 as -arch parameter.
 defineProperty("TARGET_ARCH", (IS_MAC && IS_AARCH64) ? "arm64" : OS_ARCH)
 
+defineProperty("CLASSIFIER_POSTFIX", "")
+
 // BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
 // required build tools.
 defineProperty("BUILD_TOOLS_DOWNLOAD_SCRIPT", "")
@@ -1634,7 +1636,7 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
                     afterEvaluate {
                         artifact project.tasks."moduleEmptyPublicationJar$t.capital"
                         artifact project.tasks."modularPublicationJar$t.capital" {
-                            classifier "$t.name"
+                            classifier ("$t.name" + CLASSIFIER_POSTFIX)
                         }
                     }
 
