@@ -410,6 +410,8 @@ if (IS_STATIC_BUILD && IS_COMPILE_MEDIA) {
 // By default, target architecture = host architecture, but we allow different ones.
 defineProperty("TARGET_ARCH", OS_ARCH)
 
+defineProperty("CLASSIFIER_POSTFIX", "")
+
 // BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
 // required build tools.
 defineProperty("BUILD_TOOLS_DOWNLOAD_SCRIPT", "")
@@ -1320,6 +1322,7 @@ ext.UPDATE_STUB_CACHE = (BUILD_CLOSED && STUB_RUNTIME != "" && !file(STUB_RUNTIM
 logger.quiet("gradle.gradleVersion: $gradle.gradleVersion")
 logger.quiet("OS_NAME: $OS_NAME")
 logger.quiet("OS_ARCH: $OS_ARCH")
+logger.quiet("TARGET_ARCH: $TARGET_ARCH")
 logger.quiet("JAVA_HOME: $JAVA_HOME")
 logger.quiet("JDK_HOME: $JDK_HOME")
 logger.quiet("java.runtime.version: ${javaRuntimeVersion}")
@@ -1619,7 +1622,7 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
                     afterEvaluate {
                         artifact project.tasks."moduleEmptyPublicationJar$t.capital"
                         artifact project.tasks."modularPublicationJar$t.capital" {
-                            classifier "$t.name"
+                            classifier ("$t.name" + CLASSIFIER_POSTFIX)
                         }
                     }
 
