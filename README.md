@@ -1,3 +1,24 @@
+# Publish:
+1.
+`./gradlew sdk graphics:publishToMavenLocal base:publishToMavenLocal`
+
+2. publish all local:`
+   `./gradlew publishToMavenLocal`
+
+3. publish online
+   `./gradlew clean sdk publish`
+
+4. clear cache (optional) (tested for sbt)
+   `find ~/Library/Caches/Coursier/v1 ~/.m2 ~/.ivy2 ~/.gradle | grep openjfx | grep jpro | xargs rm -r`
+
+
+MAC ARM
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
+
+Linux ARM64 (Run only on ARM64 machine)
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
+
+
 # OpenJFX
 
 OpenJFX is an open source, next generation client application platform for desktop, mobile and embedded systems based on JavaSE. It is a collaborative effort by many individuals and companies with the goal of producing a modern, efficient, and fully featured toolkit for developing rich client applications. This is the open source project where we develop JavaFX.
