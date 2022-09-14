@@ -455,7 +455,7 @@ defineProperty("COMPILE_WEBKIT", "false")
 ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.
-defineProperty("COMPILE_MEDIA", "false")
+defineProperty("COMPILE_MEDIA", "true")
 ext.IS_COMPILE_MEDIA = Boolean.parseBoolean(COMPILE_MEDIA)
 
 // BUILD_LIBAV_STUBS specifies whether to download and build libav/ffmpeg libraries
@@ -490,6 +490,8 @@ if (IS_STATIC_BUILD && IS_COMPILE_MEDIA) {
 // On Apple Silicon, default architecture must be "arm64", because clang does not accept
 // aarch64 as -arch parameter.
 defineProperty("TARGET_ARCH", (IS_MAC && IS_AARCH64) ? "arm64" : OS_ARCH)
+
+defineProperty("CLASSIFIER_POSTFIX", "")
 
 // BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
 // required build tools.
@@ -543,7 +545,7 @@ ext.IS_DEBUG_NATIVE = CONF == "DebugNative"
 ext.IS_RELEASE = !ext.IS_DEBUG_JAVA
 
 // Specifies whether to enable the Maven publishing tasks
-defineProperty("MAVEN_PUBLISH", "false")
+defineProperty("MAVEN_PUBLISH", "true")
 ext.IS_MAVEN_PUBLISH = Boolean.parseBoolean(MAVEN_PUBLISH)
 
 // Defines the compiler warning levels to use. If empty, then no warnings are generated. If
@@ -643,6 +645,7 @@ def buildTimestamp = buildInstant.toString()
 defineProperty("BUILD_TIMESTAMP", buildTimestamp)
 def relSuffix = ""
 def relOpt = ""
+/*
 if (HUDSON_JOB_NAME == "not_hudson") {
     // The version OPT field matches the regular expression "([-a-zA-Z0-9.]+)".
     // For the ISO 8601 basic format, use the pattern "yyyyMMdd'T'HHmmssX".
@@ -653,7 +656,8 @@ if (HUDSON_JOB_NAME == "not_hudson") {
     relOpt = "-${versionTimestamp}"
 } else {
     relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
-}
+}*/
+relSuffix = IS_MILESTONE_FCS ? "" : jfxReleaseSuffix
 defineProperty("RELEASE_SUFFIX", relSuffix)
 defineProperty("RELEASE_VERSION_SHORT", "${RELEASE_VERSION}${RELEASE_SUFFIX}")
 defineProperty("RELEASE_VERSION_LONG", "${RELEASE_VERSION_SHORT}+${PROMOTED_BUILD_NUMBER}${relOpt}")
@@ -1301,7 +1305,9 @@ compileTargets { t ->
     if (!targetProperties.containsKey('includeSWT')) targetProperties.includeSWT = true
     if (!targetProperties.containsKey('includeSwing')) targetProperties.includeSwing = true
     if (!targetProperties.containsKey('includeNull3d')) targetProperties.includeNull3d = true
-    if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = false
+    //if (!targetProperties.containsKey('includeMonocle')) targetProperties.includeMonocle = false
+    // JPro, let's always include monocle
+    targetProperties.includeMonocle = true
     if (!targetProperties.containsKey('includeEGL')) targetProperties.includeEGL = false
 
     if (!targetProperties.containsKey('includeGTK')) targetProperties.includeGTK = IS_LINUX
@@ -1424,6 +1430,7 @@ ext.UPDATE_STUB_CACHE = (BUILD_CLOSED && STUB_RUNTIME != "" && !file(STUB_RUNTIM
 logger.quiet("gradle.gradleVersion: $gradle.gradleVersion")
 logger.quiet("OS_NAME: $OS_NAME")
 logger.quiet("OS_ARCH: $OS_ARCH")
+logger.quiet("TARGET_ARCH: $TARGET_ARCH")
 logger.quiet("JAVA_HOME: $JAVA_HOME")
 logger.quiet("JDK_HOME: $JDK_HOME")
 logger.quiet("java.runtime.version: ${javaRuntimeVersion}")
@@ -1706,13 +1713,11 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
     project.publishing {
         repositories {
             maven {
-                def repositoryUrl = project.hasProperty('repositoryUrl') ? project.getProperty('repositoryUrl') : ""
-                def repositoryUsername = project.hasProperty('repositoryUsername') ? project.getProperty('repositoryUsername') : ""
-                def repositoryPassword = project.hasProperty('repositoryPassword') ? project.getProperty('repositoryPassword') : ""
-                url repositoryUrl
+                name = "artifactory"
+                url = "https://sandec.jfrog.io/artifactory/repo"
                 credentials {
-                   username repositoryUsername
-                   password repositoryPassword
+                    username System.getenv("SANDEC_ARTIFACTORY_USERNAME")
+                    password System.getenv("SANDEC_ARTIFACTORY_PASSWORD")
                 }
             }
         }
@@ -1727,7 +1732,7 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
                     afterEvaluate {
                         artifact project.tasks."moduleEmptyPublicationJar$t.capital"
                         artifact project.tasks."modularPublicationJar$t.capital" {
-                            classifier "$t.name"
+                            classifier ("$t.name" + CLASSIFIER_POSTFIX)
                         }
                     }
 
