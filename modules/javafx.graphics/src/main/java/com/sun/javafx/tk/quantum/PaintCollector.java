@@ -396,25 +396,31 @@ final class PaintCollector implements CompletionListener {
                 if (ws != null) {
                     final ViewScene vs = ws.getViewScene();
 
-                    // Check to see if this scene is in our dirty list.  If so, we will need to render
-                    // the scene before we recopy it to the screen.  If not, we can skip this step.
-                    if (dirtyScenes.indexOf(vs) != -1) {
-                        if (!needsHint) {
-                            needsHint = vs.isSynchronous();
+                    if(vs != null) {
+                        // Check to see if this scene is in our dirty list.  If so, we will need to render
+                        // the scene before we recopy it to the screen.  If not, we can skip this step.
+                        if (dirtyScenes.indexOf(vs) != -1) {
+                            if (!needsHint) {
+                                needsHint = vs.isSynchronous();
+                            }
                         }
-                    }
-                    if (!PlatformUtil.useEGL() || i == (n - 1)) {
-                        // for platforms without a native window manager, we only want to do the
-                        // swap to the screen after the last window has been rendered
-                        vs.setDoPresent(true);
+                        if (!PlatformUtil.useEGL() || i == (n - 1)) {
+                            // for platforms without a native window manager, we only want to do the
+                            // swap to the screen after the last window has been rendered
+                            vs.setDoPresent(true);
+                        } else {
+                            vs.setDoPresent(false);
+                        }
+                        try {
+                            vs.repaint();
+                        } catch (Throwable t) {
+                            t.printStackTrace();
+                        }
                     } else {
-                        vs.setDoPresent(false);
+                        allWorkCompletedLatch.countDown();
                     }
-                    try {
-                        vs.repaint();
-                    } catch (Throwable t) {
-                        t.printStackTrace();
-                    }
+                } else {
+                    allWorkCompletedLatch.countDown();
                 }
             }
         } else {
