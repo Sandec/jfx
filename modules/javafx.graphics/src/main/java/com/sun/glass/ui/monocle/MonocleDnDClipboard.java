@@ -50,9 +50,10 @@ final class MonocleDnDClipboard extends SystemClipboard {
      */
     @Override
     protected  void pushToSystem(HashMap<String, Object> cacheData, int supportedActions) {
-        MouseInput.getInstance().notifyDragStart();
-        ((MonocleApplication) Application.GetApplication()).enterDnDEventLoop();
-        actionPerformed(Clipboard.ACTION_COPY_OR_MOVE);
+        //MouseInput.getInstance().notifyDragStart();
+        //((MonocleApplication) Application.GetApplication()).enterDnDEventLoop();
+        //actionPerformed(Clipboard.ACTION_COPY_OR_MOVE);
+        System.out.println("Skipped enterDnDEventLoop");
     }
 
     @Override
