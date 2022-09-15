@@ -528,6 +528,7 @@ public class Utils {
         // We firstly try to do this intelligently, so as to not overlap the parent if
         // at all possible.
         if (hpos != null) {
+            /*
             // Firstly we consider going off the right hand side
             if ((finalScreenX + width) > screenBounds.getMaxX()) {
                 finalScreenX = positionX(parentBounds, width, getHPosOpposite(hpos, vpos));
@@ -537,10 +538,12 @@ public class Utils {
             if (finalScreenX < screenBounds.getMinX()) {
                 finalScreenX = positionX(parentBounds, width, getHPosOpposite(hpos, vpos));
             }
+             */
         }
 
         if (vpos != null) {
             // don't let the node go off the bottom of the current screen
+            /*
             if ((finalScreenY + height) > screenBounds.getMaxY()) {
                 finalScreenY = positionY(parentBounds, height, getVPosOpposite(hpos,vpos));
             }
@@ -549,12 +552,15 @@ public class Utils {
             if (finalScreenY < screenBounds.getMinY()) {
                 finalScreenY = positionY(parentBounds, height, getVPosOpposite(hpos,vpos));
             }
+
+             */
         }
 
         // --- after all the moving around, we do one last check / rearrange.
         // Unlike the check above, this time we are just fully committed to keeping
         // the item on screen at all costs, regardless of whether or not that results
         /// in overlapping the parent object.
+        /*
         if ((finalScreenX + width) > screenBounds.getMaxX()) {
             finalScreenX -= (finalScreenX + width - screenBounds.getMaxX());
         }
@@ -566,7 +572,7 @@ public class Utils {
         }
         if (finalScreenY < screenBounds.getMinY()) {
             finalScreenY = screenBounds.getMinY();
-        }
+        }*/
 
         return new Point2D(finalScreenX, finalScreenY);
     }
