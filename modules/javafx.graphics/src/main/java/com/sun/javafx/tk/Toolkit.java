@@ -374,6 +374,9 @@ public abstract class Toolkit {
     private final Set<TKPulseListener> postScenePulseListeners = Collections.newSetFromMap(new WeakHashMap<>());
     private final Set<TKListener> toolkitListeners = Collections.newSetFromMap(new WeakHashMap<>());
 
+    private final Map<TKPulseListener,AccessControlContext> cleanupListeners =
+            new WeakHashMap<TKPulseListener,AccessControlContext>();
+
     // The set of shutdown hooks is strongly held to avoid premature GC.
     private final Set<Runnable> shutdownHooks = new HashSet<>();
 
@@ -390,10 +393,15 @@ public abstract class Toolkit {
         final Set<TKPulseListener> scenePulseList = new HashSet<>();
         final Set<TKPulseListener> postScenePulseList = new HashSet<>();
 
+        final Map<TKPulseListener,AccessControlContext> cleanupList =
+                new WeakHashMap<TKPulseListener,AccessControlContext>();
+
         synchronized (this) {
-            stagePulseList.addAll(stagePulseListeners);
-            scenePulseList.addAll(scenePulseListeners);
-            postScenePulseList.addAll(postScenePulseListeners);
+            stagePulseList.putAll(stagePulseListeners);
+            scenePulseList.putAll(scenePulseListeners);
+            postScenePulseList.putAll(postScenePulseListeners);
+            cleanupList.putAll(cleanupListeners);
+            cleanupListeners.clear();
         }
         for (TKPulseListener listener : stagePulseList) {
             runPulse(listener);
@@ -403,6 +411,9 @@ public abstract class Toolkit {
         }
         for (TKPulseListener listener : postScenePulseList) {
             runPulse(listener);
+        }
+        for (@SuppressWarnings("removal") Map.Entry<TKPulseListener,AccessControlContext> entry : cleanupList.entrySet()) {
+            runPulse(entry.getKey(), entry.getValue());
         }
 
         if (lastTkPulseListener != null) {
@@ -447,6 +458,11 @@ public abstract class Toolkit {
         synchronized (this) {
             postScenePulseListeners.remove(listener);
         }
+    }
+
+    public void addCleanupListener(TKPulseListener listener) {
+        AccessControlContext acc = AccessController.getContext();
+        cleanupListeners.put(listener,acc);
     }
 
     public void addTkListener(TKListener listener) {
