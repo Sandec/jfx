@@ -878,7 +878,7 @@ class GlassViewEventHandler extends View.EventHandler {
                     }
                     if (QuantumToolkit.drawInPaint && w != null && w.isVisible()) {
                         WindowStage stage = scene.getWindowStage();
-                        if (stage != null) {
+                        if (stage != null && !QuantumToolkit.noRenderJobs && !QuantumToolkit.renderOnlySnapshots) {
                             collector.liveRepaintRenderJob(scene);
                         }
                     }
