@@ -173,7 +173,13 @@ public final class QuantumToolkit extends Toolkit {
         return result;
     }).get();
 
-    private static final boolean noRenderJobs = ((Supplier<Boolean>) () -> {
+    public static boolean renderOnlySnapshots =
+            AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
+                Boolean result = Boolean.getBoolean("quantum.renderonlysnapshots");
+                return result;
+            });
+
+    public static boolean noRenderJobs = ((Supplier<Boolean>) () -> {
         Boolean result = Boolean.getBoolean("quantum.norenderjobs");
         if (/*verbose &&*/ result) {
             System.out.println("Warning: Quantum will not submit render jobs, nothing should draw");
@@ -480,9 +486,13 @@ public final class QuantumToolkit extends Toolkit {
         return Toolkit.getFxUserThread();
     }
 
-    @Override public Future addRenderJob(RenderJob r) {
+    public Future addRenderJob(RenderJob r) {
+        return addRenderJob(r,false);
+    }
+
+    public Future addRenderJob(RenderJob r, boolean isSnapshot){
         // Do not run any render jobs (this is for benchmarking only)
-        if (noRenderJobs) {
+        if (noRenderJobs || (!isSnapshot && renderOnlySnapshots)) {
             CompletionListener listener = r.getCompletionListener();
             if (r instanceof PaintRenderJob) {
                 ((PaintRenderJob)r).getScene().setPainting(false);
@@ -1180,7 +1190,7 @@ public final class QuantumToolkit extends Toolkit {
         int intX = (int)x + pImage.getMinX();
         int intY = (int)y + pImage.getMinY();
 
-        if (pImage.isOpaque()) {
+        if (pImage.isOpaque() || pImage.getPixelBuffer() == null) {
             return true;
         }
 
@@ -1687,7 +1697,7 @@ public final class QuantumToolkit extends Toolkit {
 
         final CountDownLatch latch = new CountDownLatch(1);
         re.setCompletionListener(job -> latch.countDown());
-        addRenderJob(re);
+        addRenderJob(re, true);
 
         do {
             try {
