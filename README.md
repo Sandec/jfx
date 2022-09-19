@@ -12,6 +12,9 @@
    `find ~/Library/Caches/Coursier/v1 ~/.m2 ~/.ivy2 ~/.gradle | grep openjfx | grep jpro | xargs rm -r`
 
 
+MAC INTEL
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=x86_64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=
+
 MAC ARM
 ./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
 
