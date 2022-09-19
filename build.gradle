@@ -392,7 +392,7 @@ defineProperty("COMPILE_WEBKIT", "false")
 ext.IS_COMPILE_WEBKIT = Boolean.parseBoolean(COMPILE_WEBKIT)
 
 // COMPILE_MEDIA specifies whether to build all of media.
-defineProperty("COMPILE_MEDIA", "true")
+defineProperty("COMPILE_MEDIA", "false")
 ext.IS_COMPILE_MEDIA = Boolean.parseBoolean(COMPILE_MEDIA)
 
 // BUILD_LIBAV_STUBS specifies whether to download and build libav/ffmpeg libraries
