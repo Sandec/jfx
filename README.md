@@ -18,6 +18,9 @@ MAC INTEL
 MAC ARM
 ./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
 
+Linux:
+./gradlew clean && ./gradlew sdk && ./gradlew publish
+
 Linux ARM64 (Run only on ARM64 machine)
 ./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
 
