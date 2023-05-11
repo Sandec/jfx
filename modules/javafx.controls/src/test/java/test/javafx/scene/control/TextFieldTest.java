@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -363,7 +363,7 @@ public class TextFieldTest {
     }
 
     /**
-     * Test related to https://bugs.openjdk.java.net/browse/JDK-8207759
+     * Test related to https://bugs.openjdk.org/browse/JDK-8207759
      * broken event dispatch sequence by forwardToParent.
      */
     @Test
@@ -472,6 +472,13 @@ public class TextFieldTest {
         assertEquals("x aayyy", txtField.getText());
         assertEquals(4, txtField.getSelection().getStart());
         assertEquals(4, txtField.getSelection().getEnd());
+    }
+
+    @Test public void stripInvalidCharacters() {
+        txtField.setText("abcdefghijklm");
+        char[] c = new char[]{0x7F, 0xA, 0x9, 0x00, 0x05, 0x10, 0x19};
+        txtField.setText(String.valueOf(c));
+        assertEquals("", txtField.getText());
     }
 
     private Change noDigits(Change change) {

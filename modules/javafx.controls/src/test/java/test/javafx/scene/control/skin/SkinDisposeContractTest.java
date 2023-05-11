@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.TextArea;
 
 /**
- * Test for https://bugs.openjdk.java.net/browse/JDK-8244112:
+ * Test for https://bugs.openjdk.org/browse/JDK-8244112:
  * skin must not blow if dispose is called more than once.
  * <p>
  * This test is parameterized in the type of control.

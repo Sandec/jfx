@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,6 +192,15 @@ class ES2Texture<T extends ES2TextureData> extends BaseTexture<ES2TextureResourc
             texHeight = nextPowerOfTwo(texHeight, maxSize);
         }
 
+        if (texWidth <= 0 || texHeight <= 0) {
+            throw new RuntimeException("Illegal texture dimensions (" + texWidth + "x" + texHeight + ")");
+        }
+
+        int bpp = format.getBytesPerPixelUnit();
+        if (texWidth >= (Integer.MAX_VALUE / texHeight / bpp)) {
+            throw new RuntimeException("Illegal texture dimensions (" + texWidth + "x" + texHeight + ")");
+        }
+
         ES2VramPool pool = ES2VramPool.instance;
         long size = pool.estimateTextureSize(texWidth, texHeight, format);
         if (!pool.prepareForAllocation(size)) {
@@ -282,6 +291,17 @@ class ES2Texture<T extends ES2TextureData> extends BaseTexture<ES2TextureResourc
         if (!glCtx.canCreateNonPowTwoTextures()) {
             texWidth = nextPowerOfTwo(texWidth, maxSize);
             texHeight = nextPowerOfTwo(texHeight, maxSize);
+        }
+
+        if (texWidth <= 0 || texHeight <= 0) {
+            frame.releaseFrame();
+            throw new RuntimeException("Illegal texture dimensions (" + texWidth + "x" + texHeight + ")");
+        }
+
+        int bpp = format.getBytesPerPixelUnit();
+        if (texWidth >= (Integer.MAX_VALUE / texHeight / bpp)) {
+            frame.releaseFrame();
+            throw new RuntimeException("Illegal texture dimensions (" + texWidth + "x" + texHeight + ")");
         }
 
         ES2VramPool pool = ES2VramPool.instance;

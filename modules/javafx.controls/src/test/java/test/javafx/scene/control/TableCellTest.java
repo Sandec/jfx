@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -533,7 +533,7 @@ public class TableCellTest {
      * Test that cell.cancelEdit can switch table editing off
      * even if a subclass violates its contract.
      *
-     * For details, see https://bugs.openjdk.java.net/browse/JDK-8265206
+     * For details, see https://bugs.openjdk.org/browse/JDK-8265206
      *
      */
     @Test

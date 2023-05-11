@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -354,6 +354,11 @@ public abstract class BaseTexture<T extends ManagedResource> implements Texture 
             throw new IllegalArgumentException(
                 "srcw (" + srcw + ") and srch (" + srch + ") must be > 0");
         }
+        if (srcscan >= (Integer.MAX_VALUE / srch)) {
+            throw new IllegalArgumentException(
+                "srcscan * srch (" + srcscan + " * " + srch + ") must be < "
+                + "Integer.MAX_VALUE (" + Integer.MAX_VALUE + ")");
+        }
         int bytesPerPixel = fmt.getBytesPerPixelUnit();
         if (srcscan % bytesPerPixel != 0) {
             throw new IllegalArgumentException(
@@ -379,7 +384,7 @@ public abstract class BaseTexture<T extends ManagedResource> implements Texture 
             (srcx * bytesPerPixel) + (srcy * srcscan) +
             ((srch-1) * srcscan) + (srcw * bytesPerPixel);
         int elemsNeeded = bytesNeeded / format.getDataType().getSizeInBytes();
-        if (elemsNeeded > buf.remaining()) {
+        if (elemsNeeded < 0 || elemsNeeded > buf.remaining()) {
             throw new IllegalArgumentException(
                 "Upload requires " + elemsNeeded + " elements, but only " +
                 buf.remaining() + " elements remain in the buffer");

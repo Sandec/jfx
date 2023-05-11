@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import javafx.application.Platform;
 import com.sun.glass.utils.NativeLibLoader;
 import com.sun.javafx.logging.PlatformLogger;
 import com.sun.javafx.logging.PlatformLogger.Level;
+import com.sun.javafx.tk.Toolkit;
 import com.sun.webkit.event.WCFocusEvent;
 import com.sun.webkit.event.WCInputMethodEvent;
 import com.sun.webkit.event.WCKeyEvent;
@@ -156,6 +157,19 @@ public final class WebPage {
 
             // Initialize WTF, WebCore and JavaScriptCore.
             twkInitWebCore(useJIT, useDFGJIT, useCSS3D);
+
+            // Inform the native webkit code when either the JVM or the
+            // JavaFX runtime is being shutdown
+            final Runnable shutdownHook = () -> {
+                synchronized(WebPage.class) {
+                    MainThread.twkSetShutdown(true);
+                }
+            };
+
+            // Register shutdown hook with the Java runtime and the Toolkit
+            Toolkit.getToolkit().addShutdownHook(shutdownHook);
+            Runtime.getRuntime().addShutdownHook(new Thread(shutdownHook));
+
             return null;
         });
 
@@ -816,7 +830,7 @@ public final class WebPage {
                                       //for system DnD loop and not intereasted in
                                       //intermediate mouse events that can change text selection.
                 && twkProcessMouseEvent(getPage(), me.getID(),
-                                        me.getButton(), me.getClickCount(),
+                                        me.getButton(), me.getButtonMask(), me.getClickCount(),
                                         me.getX(), me.getY(), me.getScreenX(), me.getScreenY(),
                                         me.isShiftDown(), me.isControlDown(), me.isAltDown(), me.isMetaDown(), me.isPopupTrigger(),
                                         me.getWhen() / 1000.0);
@@ -2626,7 +2640,7 @@ public final class WebPage {
                                               boolean shift, boolean ctrl,
                                               boolean alt, boolean meta, double when);
     private native boolean twkProcessMouseEvent(long pPage, int id,
-                                                int button, int clickCount,
+                                                int button, int buttonMask, int clickCount,
                                                 int x, int y, int sx, int sy,
                                                 boolean shift, boolean control, boolean alt, boolean meta,
                                                 boolean popupTrigger, double when);
