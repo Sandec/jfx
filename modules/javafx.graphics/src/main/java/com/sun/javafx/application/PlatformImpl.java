@@ -192,6 +192,7 @@ public class PlatformImpl {
             return;
         }
 
+        /*
         final Module module = PlatformImpl.class.getModule();
         final ModuleDescriptor moduleDesc = module.getDescriptor();
         if (!module.isNamed()
@@ -207,7 +208,7 @@ public class PlatformImpl {
                 warningStr += ", isOpen: " + moduleDesc.isOpen();
             }
             Logging.getJavaFXLogger().warning(warningStr);
-        }
+        }*/
 
         @SuppressWarnings("removal")
         var dummy = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
