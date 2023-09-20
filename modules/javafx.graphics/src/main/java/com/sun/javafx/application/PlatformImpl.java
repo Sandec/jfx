@@ -188,6 +188,7 @@ public class PlatformImpl {
             return;
         }
 
+        /*
         final Module module = PlatformImpl.class.getModule();
         final ModuleDescriptor moduleDesc = module.getDescriptor();
         if (!module.isNamed()
@@ -203,7 +204,7 @@ public class PlatformImpl {
                 warningStr += ", isOpen: " + moduleDesc.isOpen();
             }
             Logging.getJavaFXLogger().warning(warningStr);
-        }
+        }*/
 
         applicationType = System.getProperty("com.sun.javafx.application.type");
         if (applicationType == null) applicationType = "";
