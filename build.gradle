@@ -641,7 +641,8 @@ if (sourceDateEpoch != null) {
     buildInstant = Instant.ofEpochSecond(epochSeconds)
 }
 // Creates the timestamp in UTC using the ISO 8601 extended format
-def buildTimestamp = buildInstant.toString()
+def buildTimestamp = buildInstant.toString().replaceAll(":", "-")
+// THIS IS THE PROBLEM
 defineProperty("BUILD_TIMESTAMP", buildTimestamp)
 def relSuffix = ""
 def relOpt = ""
