@@ -13,16 +13,16 @@
 
 
 MAC INTEL
-./gradlew clean && ./gradlew sdk -PTARGET_ARCH=x86_64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=x86_64 && ./gradlew publish -PMAVEN_PUBLISH=true -PTARGET_ARCH=x86_64 -PCLASSIFIER_POSTFIX=
 
 MAC ARM
-./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PTARGET_ARCH=arm64 -PCLASSIFIER_POSTFIX=-aarch64
 
 Linux:
 ./gradlew clean && ./gradlew sdk && ./gradlew publish
 
 Linux ARM64 (Run only on ARM64 machine)
-./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PCLASSIFIER_POSTFIX=-aarch64
+./gradlew clean && ./gradlew sdk -PTARGET_ARCH=arm64 && ./gradlew publish -PMAVEN_PUBLISH=true -PTARGET_ARCH=arm64 -PCLASSIFIER_POSTFIX=-aarch64
 
 
 
