@@ -147,7 +147,6 @@ final public class SimpleSelector extends Selector {
         // then match needs to check name
         this.matchOnName = (name != null && !("".equals(name)) && !("*".equals(name)));
 
-        Set<StyleClass> scs = new StyleClassSet();
         this.unwrappedStyleClassSet = new StyleClassSet();
 
         if (styleClasses != null) {
