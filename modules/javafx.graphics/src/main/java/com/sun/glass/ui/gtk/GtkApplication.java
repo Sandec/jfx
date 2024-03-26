@@ -383,11 +383,6 @@ final class GtkApplication extends Application implements
     }
 
     @Override
-    public Window createWindow(long parent) {
-        return new GtkChildWindow(parent);
-    }
-
-    @Override
     public View createView() {
         return new GtkView();
     }
@@ -414,6 +409,11 @@ final class GtkApplication extends Application implements
     @Override
     public Pixels createPixels(int width, int height, ByteBuffer data) {
         return new GtkPixels(width, height, data);
+    }
+
+    @Override
+    public Pixels createPixels(int width, int height, ByteBuffer data, float scalex, float scaley) {
+        return new GtkPixels(width, height, data, scalex, scaley);
     }
 
     @Override

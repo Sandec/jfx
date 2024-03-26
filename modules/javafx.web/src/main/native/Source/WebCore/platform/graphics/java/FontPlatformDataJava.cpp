@@ -134,8 +134,14 @@ unsigned FontPlatformData::hash() const
 String FontPlatformData::description() const
 {
     notImplemented();
-    return "Java font";
+    return "Java font"_s;
 }
 #endif //NDEBUG
+
+String FontPlatformData::familyName() const
+{
+    // FIXME: Not implemented yet.
+    return { };
+}
 
 }

@@ -99,9 +99,9 @@ final class MacView extends View {
                                 pixels.getWidth(), pixels.getHeight(), pixels.getScaleX(), pixels.getScaleY());
         }
     }
-    native void _uploadPixelsDirect(long viewPtr, Buffer pixels, int width, int height, float scaleX, float scaleY);
-    native void _uploadPixelsByteArray(long viewPtr, byte[] pixels, int offset, int width, int height, float scaleX, float scaleY);
-    native void _uploadPixelsIntArray(long viewPtr, int[] pixels, int offset, int width, int height, float scaleX, float scaleY);
+    private native void _uploadPixelsDirect(long viewPtr, Buffer pixels, int width, int height, float scaleX, float scaleY);
+    private native void _uploadPixelsByteArray(long viewPtr, byte[] pixels, int offset, int width, int height, float scaleX, float scaleY);
+    private native void _uploadPixelsIntArray(long viewPtr, int[] pixels, int offset, int width, int height, float scaleX, float scaleY);
 
     @Override
     protected void notifyResize(int width, int height) {
@@ -135,18 +135,6 @@ final class MacView extends View {
     native protected long _getNativeLayer(long ptr);
     public long getNativeLayer() {
         return _getNativeLayer(getNativeView());
-    }
-
-    native protected int _getNativeRemoteLayerId(long ptr, String serverName);
-    @Override public int getNativeRemoteLayerId(String serverName) {
-        // used when run inside plugin
-        return _getNativeRemoteLayerId(getNativeLayer(), serverName);
-    }
-
-    native protected void _hostRemoteLayerId(long ptr, int nativeLayerId);
-    public void hostRemoteLayerId(int nativeLayerId) {
-        // used when run inside plugin
-        _hostRemoteLayerId(getNativeLayer(), nativeLayerId);
     }
 
     protected void notifyInputMethodMac(String str, int attrib, int length,

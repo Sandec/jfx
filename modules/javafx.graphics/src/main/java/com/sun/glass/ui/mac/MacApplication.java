@@ -85,7 +85,7 @@ final class MacApplication extends Application implements InvokeLaterDispatcher.
         // We need to spin up a nested event loop and wait for the reactivation
         // to finish prior to allowing the rest of the initialization to run.
         final Runnable wrappedRunnable = () -> {
-            if (isNormalTaskbarApp()) {
+            if (isTriggerReactivation()) {
                 waitForReactivation();
             }
             launchable.run();
@@ -247,17 +247,6 @@ final class MacApplication extends Application implements InvokeLaterDispatcher.
         return new MacWindow(owner, screen, styleMask);
     }
 
-    final static long BROWSER_PARENT_ID = -1L;
-    @Override public Window createWindow(long parent) {
-        Window window = new MacWindow(parent);
-        if (parent == BROWSER_PARENT_ID) {
-            // Special case: a Mac embedded window, which is a parent to other child Windows.
-            // Needs implicit view, with a layer that will be provided to the plugin
-            window.setView(createView());
-        }
-        return window;
-    }
-
     @Override public View createView() {
         return new MacView();
     }
@@ -280,6 +269,10 @@ final class MacApplication extends Application implements InvokeLaterDispatcher.
 
     @Override public Pixels createPixels(int width, int height, ByteBuffer data) {
         return new MacPixels(width, height, data);
+    }
+
+    @Override public Pixels createPixels(int width, int height, ByteBuffer data, float scalex, float scaley) {
+        return new MacPixels(width, height, data, scalex, scaley);
     }
 
     @Override public Pixels createPixels(int width, int height, IntBuffer data) {
@@ -374,14 +367,9 @@ final class MacApplication extends Application implements InvokeLaterDispatcher.
 
     // NOTE: this will not return a valid result until the native _runloop
     // method has been executed and called the Runnable passed to that method.
-    native private boolean _isNormalTaskbarApp();
-    boolean isNormalTaskbarApp() {
-        return _isNormalTaskbarApp();
-    }
-
-    native protected String _getRemoteLayerServerName();
-    public String getRemoteLayerServerName() {
-        return _getRemoteLayerServerName();
+    native private boolean _isTriggerReactivation();
+    boolean isTriggerReactivation() {
+        return _isTriggerReactivation();
     }
 
     private native String _getDataDirectory();

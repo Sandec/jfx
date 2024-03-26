@@ -195,7 +195,6 @@ public abstract class Window {
     }
 
     private final Window owner;
-    private final long parent;
     private final int styleMask;
     private final boolean isDecorated;
     private boolean shouldStartUndecoratedMove = false;
@@ -219,15 +218,6 @@ public abstract class Window {
     private float outputScaleY = 1.0f;
     private float renderScaleX = 1.0f;
     private float renderScaleY = 1.0f;
-    private boolean appletMode = false;
-
-    // This is a workaround for RT-15970: as for embedded windows we don't
-    // receive any MOVE notifications from the native platform, we poll
-    // the window location on screen from timer and post synthetic events
-    // if it has changed
-    private Timer embeddedLocationTimer = null;
-    private int lastKnownEmbeddedX = 0;
-    private int lastKnownEmbeddedY = 0;
 
     private volatile boolean isResizable = false;
     private volatile boolean isVisible = false;
@@ -276,7 +266,6 @@ public abstract class Window {
 
 
         this.owner = owner;
-        this.parent = 0L;
         this.styleMask = styleMask;
         this.isDecorated = (this.styleMask & Window.TITLED) != 0;
 
@@ -292,37 +281,6 @@ public abstract class Window {
                 this.screen.getNativeScreen(), this.styleMask);
         if (this.ptr == 0L) {
             throw new RuntimeException("could not create platform window");
-        }
-    }
-
-    protected abstract long _createChildWindow(long parent);
-    /**
-     * Constructs a child window of the specified native parent window.
-     */
-    protected Window(long parent) {
-        Application.checkEventThread();
-        this.owner = null;
-        this.parent = parent;
-        this.styleMask = Window.UNTITLED;
-        this.isDecorated = false;
-
-        // Note: we can't always catch screen changes when parent is moved...
-        this.screen = null; // should infer from the parent
-
-        this.ptr = _createChildWindow(parent);
-        if (this.ptr == 0L) {
-            throw new RuntimeException("could not create platform window");
-        }
-
-        if (screen == null) {
-            screen = Screen.getMainScreen(); // start with a default
-
-            if (PrismSettings.allowHiDPIScaling) {
-                this.platformScaleX = this.screen.getPlatformScaleX();
-                this.platformScaleY = this.screen.getPlatformScaleY();
-                this.outputScaleX = this.screen.getRecommendedOutputScaleX();
-                this.outputScaleY = this.screen.getRecommendedOutputScaleY();
-            }
         }
     }
 
@@ -351,11 +309,6 @@ public abstract class Window {
         if (this.ptr != 0L) {
             _close(this.ptr);
         }
-    }
-
-    private boolean isChild() {
-        Application.checkEventThread();
-        return this.parent != 0L;
     }
 
     /** This method returns "lowest-level" native window handle
@@ -395,6 +348,7 @@ public abstract class Window {
     }
 
     protected abstract boolean _setView(long ptr, View view);
+    protected abstract void _updateViewSize(long ptr);
     public void setView(final View view) {
         Application.checkEventThread();
         checkNotClosed();
@@ -416,6 +370,10 @@ public abstract class Window {
         if (view != null && _setView(this.ptr, view)) {
             this.view = view;
             this.view.setWindow(this);
+            // View size update (especially notifyResize event) has to happen
+            // after we call view.setWindow(this); otherwise with UI scaling different than
+            // 100% some platforms might display scenes wrong after Window was shown.
+            _updateViewSize(this.ptr);
             if (this.isDecorated == false) {
                 this.helper = new UndecoratedMoveResizeHelper();
             }
@@ -558,19 +516,6 @@ public abstract class Window {
         return outputScaleY;
     }
 
-    protected abstract int _getEmbeddedX(long ptr);
-    protected abstract int _getEmbeddedY(long ptr);
-
-    private void checkScreenLocation() {
-        this.x = _getEmbeddedX(ptr);
-        this.y = _getEmbeddedY(ptr);
-        if ((this.x != lastKnownEmbeddedX) || (this.y != lastKnownEmbeddedY)) {
-            lastKnownEmbeddedX = this.x;
-            lastKnownEmbeddedY = this.y;
-            handleWindowEvent(System.nanoTime(), WindowEvent.MOVE);
-        }
-    }
-
     public int getX() {
         Application.checkEventThread();
         return this.x;
@@ -686,9 +631,6 @@ public abstract class Window {
                     this.isVisible = visible;
                 }
                 remove(this);
-                if (parent != 0) {
-                    embeddedLocationTimer.stop();
-                }
             } else {
                 checkNotClosed();
                 this.isVisible = _setVisible(this.ptr, visible);
@@ -697,13 +639,6 @@ public abstract class Window {
                     getView().setVisible(this.isVisible);
                 }
                 add(this);
-                if (parent != 0) {
-                    final Runnable checkRunnable = () -> checkScreenLocation();
-                    final Runnable timerRunnable = () -> Application.invokeLater(checkRunnable);
-                    embeddedLocationTimer =
-                           Application.GetApplication().createTimer(timerRunnable);
-                    embeddedLocationTimer.start(16);
-                }
 
                 synthesizeViewMoveEvent();
             }
@@ -763,12 +698,8 @@ public abstract class Window {
         Application.checkEventThread();
         checkNotClosed();
 
-        if (!isChild() && event != WindowEvent.FOCUS_GAINED) {
+        if (event != WindowEvent.FOCUS_GAINED) {
             throw new IllegalArgumentException("Invalid focus event ID for top-level window");
-        }
-
-        if (isChild() && (event < WindowEvent._FOCUS_MIN || event > WindowEvent._FOCUS_MAX)) {
-            throw new IllegalArgumentException("Invalid focus event ID for child window");
         }
 
         if (event == WindowEvent.FOCUS_LOST && !isFocused()) {
@@ -969,14 +900,6 @@ public abstract class Window {
     public float getAlpha() {
         Application.checkEventThread();
         return this.alpha;
-    }
-
-    public boolean getAppletMode() {
-        return appletMode;
-    }
-
-    public void setAppletMode(boolean appletMode) {
-        this.appletMode = appletMode;
     }
 
     protected abstract boolean _setBackground(long ptr, float r, float g, float b);
@@ -1207,12 +1130,6 @@ public abstract class Window {
 
     public boolean isModal() {
         return this.isModal;
-    }
-
-    /** Only used on Mac when run inside a plugin */
-    public void dispatchNpapiEvent(Map eventInfo) {
-        Application.checkEventThread();
-        throw new RuntimeException("This operation is not supported on this platform");
     }
 
     public EventHandler getEventHandler() {

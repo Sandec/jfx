@@ -38,13 +38,9 @@ final class IosWindow extends Window {
     protected IosWindow(Window owner, Screen screen, int styleMask) {
         super(owner, screen, styleMask);
     }
-    protected IosWindow(long parent) {
-        super(parent);
-    }
 
     // See Window for documentation
     @Override native protected long _createWindow(long ownerPtr, long screenPtr, int mask);
-    @Override native protected long _createChildWindow(long parent);
     @Override native protected boolean _close(long ptr);
     @Override native protected boolean _setView(long ptr, View view);
     @Override native protected void _setBounds(long ptr, int x, int y, boolean xSet, boolean ySet, int w, int h, int cw, int ch, float xGravity, float yGravity);
@@ -71,6 +67,10 @@ final class IosWindow extends Window {
     @Override native protected boolean _grabFocus(long ptr);
     @Override native protected void _ungrabFocus(long ptr);
 
+    // empty - not needed by this implementation
+    @Override
+    protected void _updateViewSize(long ptr) {}
+
     //No cursor on iOS. API compatibility call.
     @Override
     protected void _setCursor(long ptr, Cursor cursor) {
@@ -85,17 +85,5 @@ final class IosWindow extends Window {
 
     @Override
     native protected void _releaseInput(long ptr);
-
-    @Override
-    protected int _getEmbeddedX(long ptr) {
-        // implement for child windows
-        return 0;
-    }
-
-    @Override
-    protected int _getEmbeddedY(long ptr) {
-        // implement for child windows
-        return 0;
-    }
 
 }

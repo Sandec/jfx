@@ -43,23 +43,6 @@
     #define LOG(MSG, ...) GLASS_LOG(MSG, ## __VA_ARGS__);
 #endif
 
-//#define FORCE_NOISE
-#ifdef FORCE_NOISE
-static inline void *_GenerateNoise(int width, int height)
-{
-    static int *pixels = NULL;
-    pixels = realloc(pixels, width*height*4);
-
-    int *src = pixels;
-    for (int i=0; i<width*height; i++)
-    {
-        *src++ = random();
-    }
-
-    return (void*)pixels;
-}
-#endif
-
 static inline NSView<GlassView>* getGlassView(JNIEnv *env, jlong jPtr)
 {
     assert(jPtr != 0L);
@@ -389,57 +372,6 @@ JNIEXPORT jlong JNICALL Java_com_sun_glass_ui_mac_MacView__1getNativeLayer
 
 /*
  * Class:     com_sun_glass_ui_mac_MacView
- * Method:    _getNativeRemoteLayerId
- * Signature: (JLjava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_com_sun_glass_ui_mac_MacView__1getNativeRemoteLayerId
-(JNIEnv *env, jobject jView, jlong jPtr, jstring jServerString)
-{
-    LOG("Java_com_sun_glass_ui_mac_MacView__1_getNativeLayerId");
-    LOG("   layer: %p", jPtr);
-    if (!jPtr) return 0;
-
-    jint layerId = 0;
-
-    GLASS_ASSERT_MAIN_JAVA_THREAD(env);
-    GLASS_POOL_ENTER;
-    {
-        NSView<GlassView> *view = getGlassView(env, jPtr);
-        layerId = (jint)[view getRemoteLayerIdForServer:[GlassHelper nsStringWithJavaString:jServerString withEnv:env]];
-    }
-    GLASS_POOL_EXIT;
-    GLASS_CHECK_EXCEPTION(env);
-
-    LOG("   layerId: %d", layerId);
-    return layerId;
-}
-
-/*
- * Class:     com_sun_glass_ui_mac_MacView
- * Method:    _hostRemoteLayerId
- * Signature: (JI)V
- */
-JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacView__1hostRemoteLayerId
-(JNIEnv *env, jobject jView, jlong jPtr, jint jRemoteLayerId)
-{
-    LOG("Java_com_sun_glass_ui_mac_MacView__1hostRemoteLayerId");
-    if (!jPtr) return;
-
-    GLASS_ASSERT_MAIN_JAVA_THREAD(env);
-    GLASS_POOL_ENTER;
-    {
-        if (jRemoteLayerId > 0)
-        {
-            NSView<GlassView> *view = getGlassView(env, jPtr);
-            [view hostRemoteLayerId:(uint32_t)jRemoteLayerId];
-        }
-    }
-    GLASS_POOL_EXIT;
-    GLASS_CHECK_EXCEPTION(env);
-}
-
-/*
- * Class:     com_sun_glass_ui_mac_MacView
  * Method:    _getX
  * Signature: ()I
  */
@@ -664,15 +596,12 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacView__1uploadPixelsDirect
 {
     LOG("Java_com_sun_glass_ui_mac_MacView__1uploadPixelsDirect");
     if (!jPtr) return;
+    if (!jBuffer) return;
 
     GLASS_ASSERT_MAIN_JAVA_THREAD(env);
     NSView<GlassView> *view = getGlassView(env, jPtr);
 
-#ifndef FORCE_NOISE
     void *pixels = (*env)->GetDirectBufferAddress(env, jBuffer);
-#else
-    void *pixels = _GenerateNoise(jWidth, jHeight);
-#endif
 
     // must be in the middle of begin/end
     if ((jWidth > 0) && (jHeight > 0))
@@ -691,27 +620,31 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacView__1uploadPixelsByteArray
 {
     LOG("Java_com_sun_glass_ui_mac_MacView__1uploadPixelsByteArray");
     if (!jPtr) return;
+    if (!jArray) return;
+    if (jOffset < 0) return;
+    if (jWidth <= 0 || jHeight <= 0) return;
+
+    if (jWidth > (((INT_MAX - jOffset) / 4) / jHeight))
+    {
+        return;
+    }
 
     GLASS_ASSERT_MAIN_JAVA_THREAD(env);
+
+    if ((4 * jWidth * jHeight + jOffset) > (*env)->GetArrayLength(env, jArray))
+    {
+        return;
+    }
 
     jboolean isCopy = JNI_FALSE;
     u_int8_t *data = (*env)->GetPrimitiveArrayCritical(env, jArray, &isCopy);
     {
-        assert((4*jWidth*jHeight + jOffset) == (*env)->GetArrayLength(env, jArray));
-
         NSView<GlassView> *view = getGlassView(env, jPtr);
 
-#ifndef FORCE_NOISE
         void *pixels = (data+jOffset);
-#else
-        void *pixels = _GenerateNoise(jWidth, jHeight);
-#endif
 
         // must be in the middle of begin/end
-        if ((jWidth > 0) && (jHeight > 0))
-        {
-            [view pushPixels:pixels withWidth:(GLuint)jWidth withHeight:(GLuint)jHeight withScaleX:(GLfloat)jScaleX withScaleY:(GLfloat)jScaleY withEnv:env];
-        }
+        [view pushPixels:pixels withWidth:(GLuint)jWidth withHeight:(GLuint)jHeight withScaleX:(GLfloat)jScaleX withScaleY:(GLfloat)jScaleY withEnv:env];
     }
     (*env)->ReleasePrimitiveArrayCritical(env, jArray, data, JNI_ABORT);
 }
@@ -726,27 +659,31 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacView__1uploadPixelsIntArray
 {
     LOG("Java_com_sun_glass_ui_mac_MacView__1uploadPixelsIntArray");
     if (!jPtr) return;
+    if (!jArray) return;
+    if (jOffset < 0) return;
+    if (jWidth <= 0 || jHeight <= 0) return;
+
+    if (jWidth > ((INT_MAX - jOffset) / jHeight))
+    {
+        return;
+    }
 
     GLASS_ASSERT_MAIN_JAVA_THREAD(env);
+
+    if ((jWidth * jHeight + jOffset) > (*env)->GetArrayLength(env, jArray))
+    {
+        return;
+    }
 
     jboolean isCopy = JNI_FALSE;
     u_int32_t *data = (*env)->GetPrimitiveArrayCritical(env, jArray, &isCopy);
     {
-        assert((jWidth*jHeight + jOffset) == (*env)->GetArrayLength(env, jArray));
-
         NSView<GlassView> *view = getGlassView(env, jPtr);
 
-#ifndef FORCE_NOISE
         void *pixels = (data+jOffset);
-#else
-        void *pixels = _GenerateNoise(jWidth, jHeight);
-#endif
 
         // must be in the middle of begin/end
-        if ((jWidth > 0) && (jHeight > 0))
-        {
-            [view pushPixels:pixels withWidth:(GLuint)jWidth withHeight:(GLuint)jHeight withScaleX:(GLfloat)jScaleX withScaleY:(GLfloat)jScaleY withEnv:env];
-        }
+        [view pushPixels:pixels withWidth:(GLuint)jWidth withHeight:(GLuint)jHeight withScaleX:(GLfloat)jScaleX withScaleY:(GLfloat)jScaleY withEnv:env];
     }
     (*env)->ReleasePrimitiveArrayCritical(env, jArray, data, JNI_ABORT);
 }

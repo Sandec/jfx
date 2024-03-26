@@ -29,8 +29,10 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.SimpleStringProperty;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.sun.javafx.tk.Toolkit;
@@ -338,6 +340,55 @@ public class TableCellTest {
     @Test public void test_jdk_8151524() {
         TableCell cell = new TableCell();
         cell.setSkin(new TableCellSkin(cell));
+    }
+
+    /**
+     * The {@link TableRow} should never be null inside the {@link TableCell} during auto sizing.
+     * Note: The auto sizing is triggered as soon as the table has a scene - so when the {@link StageLoader} is created.
+     * See also: JDK-8251481
+     */
+    @Test
+    public void testRowIsNotNullWhenAutoSizing() {
+        TableColumn<String, String> tableColumn = new TableColumn<>();
+        tableColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                assertNotNull(getTableRow());
+            }
+        });
+        table.getColumns().add(tableColumn);
+
+        stageLoader = new StageLoader(table);
+    }
+
+    /**
+     * The item of the {@link TableRow} should not be null, when the {@link TableCell} is not empty.
+     * See also: JDK-8251483
+     */
+    @Ignore("Fails currently but will be enabled again in JDK-8289357")
+    @Test
+    public void testRowItemIsNotNullForNonEmptyCell() {
+        TableColumn<String, String> tableColumn = new TableColumn<>();
+        tableColumn.setCellValueFactory(cc -> new SimpleStringProperty(cc.getValue()));
+        tableColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (!empty) {
+                    assertNotNull(getTableRow().getItem());
+                }
+            }
+        });
+        table.getColumns().add(tableColumn);
+
+        stageLoader = new StageLoader(table);
+
+        // Will create a new row and cell.
+        table.getItems().add("newItem");
+        Toolkit.getToolkit().firePulse();
     }
 
     /**

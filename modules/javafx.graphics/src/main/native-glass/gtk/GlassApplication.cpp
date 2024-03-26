@@ -435,22 +435,14 @@ static void process_events(GdkEvent* event, gpointer data)
 
     glass_evloop_call_hooks(event);
 
-    if (ctx != NULL && dynamic_cast<WindowContextPlug*>(ctx) && ctx->get_gtk_window()) {
-        WindowContextPlug* ctx_plug = dynamic_cast<WindowContextPlug*>(ctx);
-        if (!ctx_plug->embedded_children.empty()) {
-            // forward to child
-            ctx = (WindowContext*) ctx_plug->embedded_children.back();
-            window = ctx->get_gdk_window();
-        }
-    }
-
     if (ctx != NULL) {
         EventsCounterHelper helper(ctx);
         try {
             switch (event->type) {
                 case GDK_PROPERTY_NOTIFY:
-                    ctx->process_property_notify(&event->property);
+                    // let gtk handle it first to prevent a glitch
                     gtk_main_do_event(event);
+                    ctx->process_property_notify(&event->property);
                     break;
                 case GDK_CONFIGURE:
                     ctx->process_configure(&event->configure);
@@ -501,7 +493,6 @@ static void process_events(GdkEvent* event, gpointer data)
                     process_dnd_target(ctx, &event->dnd);
                     break;
                 case GDK_MAP:
-                    ctx->process_map();
                     // fall-through
                 case GDK_UNMAP:
                 case GDK_CLIENT_EVENT:

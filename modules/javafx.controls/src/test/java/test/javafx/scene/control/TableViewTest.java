@@ -5941,6 +5941,82 @@ public class TableViewTest {
         assertTrue(arrowMaxX < cornerMinX);
     }
 
+    // See JDK-8311127
+    @Test
+    public void testTableMenuButtonOnlyChangesLastVisibleColumnHeader() {
+        TableView<String> table = new TableView<>();
+        table.setTableMenuButtonVisible(true);
+        for (int i = 0; i < 10; i++) {
+            final TableColumn<String, String> column = new TableColumn<>("Header");
+            column.setCellValueFactory(value -> new SimpleStringProperty(value.getValue()));
+            table.getColumns().add(column);
+        }
+        for (int i = 0; i < 10; i++) {
+            table.getItems().add(Integer.toString(i));
+        }
+
+        stageLoader = new StageLoader(new Scene(table, 300, 300));
+
+        List<Double> labelWidths = table.getColumns().stream()
+                .map(column -> VirtualFlowTestUtils.getTableColumnHeader(table, column))
+                .map(columnHeader -> columnHeader.getChildrenUnmodifiable().get(0))
+                .map(node -> node.getLayoutBounds().getWidth())
+                .toList();
+
+        // Verify that the column header width for all columns is the same:
+        for (int i = 1; i < 10; i++) {
+            assertEquals(labelWidths.get(i), labelWidths.get(0));
+        }
+
+        // scroll to last column and sort
+        table.scrollToColumnIndex(9);
+        TableColumn<String, ?> lastColumn = table.getColumns().get(9);
+        lastColumn.setSortType(DESCENDING);
+        table.getSortOrder().setAll(lastColumn);
+        Toolkit.getToolkit().firePulse();
+
+        List<Double> newLabelWidths = table.getColumns().stream()
+                .map(column -> VirtualFlowTestUtils.getTableColumnHeader(table, column))
+                .map(columnHeader -> columnHeader.getChildrenUnmodifiable().get(0))
+                .map(node -> node.getLayoutBounds().getWidth())
+                .toList();
+        // Verify that the column header width didn't change for the first 9 columns:
+        for (int i = 0; i < 9; i++) {
+            assertEquals(labelWidths.get(i), newLabelWidths.get(i));
+        }
+        // and did change for the last one:
+        assertTrue(labelWidths.get(9) > newLabelWidths.get(9));
+    }
+
+    // See JDK-8089280
+    @Test
+    public void testSuppressHorizontalScrollBar() {
+        TableView<String> table = new TableView<>();
+        for (int i = 0; i < 10; i++) {
+            final TableColumn<String, String> c = new TableColumn<>("C" + i);
+            c.setCellValueFactory(value -> new SimpleStringProperty(value.getValue()));
+            c.setMinWidth(200); // caused HSB before the fix
+            table.getColumns().add(c);
+        }
+
+        for (int i = 0; i < 10; i++) {
+            table.getItems().add("");
+        }
+
+        stageLoader = new StageLoader(new Scene(table, 50, 50));
+
+        ScrollBar hbar = VirtualFlowTestUtils.getVirtualFlowHorizontalScrollbar(table);
+        assertTrue(hbar.isVisible());
+
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        Toolkit.getToolkit().firePulse();
+
+        hbar = VirtualFlowTestUtils.getVirtualFlowHorizontalScrollbar(table);
+        assertFalse(hbar.isVisible()); // used to fail here
+    }
+
+
     @Test
     public void testQueryAccessibleAttributeSelectedItemsWithNullSelectionModel() {
         table.getItems().addAll("1", "2");
@@ -5962,5 +6038,20 @@ public class TableViewTest {
         Object result = table.queryAccessibleAttribute(AccessibleAttribute.FOCUS_ITEM);
 
         assertNull(result);
+    }
+
+    // See JDK-8138842
+    @Test
+    public void testFirstRowSelectionWithEmptyArrayAsParameter() {
+        table.getItems().addAll("1", "2", "3");
+
+        table.getSelectionModel().selectIndices(0, new int[0]);
+        assertEquals(0, table.getSelectionModel().getSelectedIndex());
+
+        table.getSelectionModel().selectIndices(1, new int[0]);
+        assertEquals(1, table.getSelectionModel().getSelectedIndex());
+
+        table.getSelectionModel().selectIndices(1, new int[]{1, 2});
+        assertEquals(2, table.getSelectionModel().getSelectedIndex());
     }
 }

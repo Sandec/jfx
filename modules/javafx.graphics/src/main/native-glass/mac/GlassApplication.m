@@ -35,7 +35,6 @@
 #import "GlassScreen.h"
 #import "GlassWindow.h"
 #import "GlassTouches.h"
-#import "RemoteLayerSupport.h"
 
 #import "ProcessInfo.h"
 #import <Security/SecRequirement.h>
@@ -54,10 +53,26 @@ static jobject nestedLoopReturnValue = NULL;
 static BOOL isFullScreenExitingLoop = NO;
 static NSMutableDictionary * keyCodeForCharMap = nil;
 static BOOL isEmbedded = NO;
-static BOOL isNormalTaskbarApp = NO;
+static BOOL requiresActivation = NO;
+static BOOL triggerReactivation = NO;
 static BOOL disableSyncRendering = NO;
 static BOOL firstActivation = YES;
 static BOOL shouldReactivate = NO;
+
+// Custom NSRunLoopMode constant that matches the one used by AWT in its
+// doAWTRunLoopImpl method. This is not formally documented yet, but all
+// versions of the JDK use it. We might consider a request to document it.
+static NSString* JavaRunLoopMode = @"AWTRunLoopMode";
+
+// List of allowable runLoop modes that Java runnables can run in.
+// This is used when calling performSelectorOnMainThread from
+// the JNI _invokeAndWait and _submitForLaterInvocation methods.
+// We include JavaRunLoopMode in the list of allowable run modes in case
+// we are running on the AWT event thread. This will allow JavaFX
+// runnables to be scheduled when AWT is running doAWTRunLoopImpl
+// on the AppKit thread (which it does for IME callbacks) so that we
+// don't deadlock.
+static NSArray<NSString*> *runLoopModes = nil;
 
 #ifdef STATIC_BUILD
 jint JNICALL JNI_OnLoad_glass(JavaVM *vm, void *reserved)
@@ -239,6 +254,15 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     }
     [pool drain];
     GLASS_CHECK_EXCEPTION(env);
+
+     if (!NSApp.isActive && requiresActivation) {
+        // As of macOS 14, application gets to the foreground,
+        // but it doesn't get activated, so this is needed:
+        LOG("-> need to active application");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSApp activate];
+        });
+    }
 }
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
@@ -266,7 +290,7 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     [pool drain];
     GLASS_CHECK_EXCEPTION(env);
 
-    if (isNormalTaskbarApp && firstActivation) {
+    if (triggerReactivation && firstActivation) {
         LOG("-> deactivate (hide)  app");
         firstActivation = NO;
         shouldReactivate = YES;
@@ -299,7 +323,7 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     [pool drain];
     GLASS_CHECK_EXCEPTION(env);
 
-    if (isNormalTaskbarApp && shouldReactivate) {
+    if (triggerReactivation && shouldReactivate) {
         LOG("-> reactivate  app");
         shouldReactivate = NO;
         [NSApp activateIgnoringOtherApps:YES];
@@ -516,6 +540,19 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
             }
         }
 
+        // List of RunLoopModes in which we will run runnables passed
+        // to _invokeAndWait and _invokeAndExit. This includes
+        // JavaRunLoopMode to avoid a possible deadlock with AWT.
+        // There is no harm always adding it, since it will have no
+        // effect if the run loop that receives this message does not
+        // specify it.
+        runLoopModes = [[NSArray alloc] initWithObjects:
+            NSDefaultRunLoopMode,
+            NSModalPanelRunLoopMode,
+            NSEventTrackingRunLoopMode,
+            JavaRunLoopMode,
+            nil];
+
         // Determine if we're running embedded (in AWT, SWT, elsewhere)
         NSApplication *app = [NSApplication sharedApplication];
         isEmbedded = [app isRunning];
@@ -531,7 +568,17 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
             }
             if (self->jTaskBarApp == JNI_TRUE)
             {
-                isNormalTaskbarApp = YES;
+                triggerReactivation = YES;
+
+                // The workaround of deactivating and reactivating
+                // the application so that the system menu bar works
+                // correctly is no longer needed (and no longer works
+                // anyway) as of macOS 14
+                if (@available(macOS 14.0, *)) {
+                    triggerReactivation = NO;
+                    requiresActivation = YES;
+                }
+
                 // move process from background only to full on app with visible Dock icon
                 ProcessSerialNumber psn;
                 if (GetCurrentProcess(&psn) == noErr)
@@ -607,11 +654,6 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
                     {
                         TransformProcessType(&psn, 4); // kProcessTransformToUIElementApplication
                     }
-                }
-                else
-                {
-                    // 10.6 or earlier: applets are not officially supported on 10.6 and earlier
-                    // so they will have limited applet functionality (no active windows)
                 }
                 [app setDelegate:self];
             }
@@ -957,7 +999,7 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacApplication__1submitForLater
     if (jEnv != NULL)
     {
         GlassRunnable *runnable = [[GlassRunnable alloc] initWithRunnable:(*env)->NewGlobalRef(env, jRunnable)];
-        [runnable performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:NO];
+        [runnable performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:NO modes:runLoopModes];
     }
 }
 
@@ -975,37 +1017,8 @@ JNIEXPORT void JNICALL Java_com_sun_glass_ui_mac_MacApplication__1invokeAndWait
     if (jEnv != NULL)
     {
         GlassRunnable *runnable = [[GlassRunnable alloc] initWithRunnable:(*env)->NewGlobalRef(env, jRunnable)];
-        [runnable performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:YES];
+        [runnable performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:YES modes:runLoopModes];
     }
-}
-
-/*
- * Class:     com_sun_glass_ui_mac_MacApplication
- * Method:    _getRemoteLayerServerName
- * Signature: ()Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_sun_glass_ui_mac_MacApplication__1getRemoteLayerServerName
-(JNIEnv *env, jobject japplication)
-{
-    LOG("Java_com_sun_glass_ui_mac_MacPasteboard__1getName");
-
-    jstring name = NULL;
-
-    GLASS_ASSERT_MAIN_JAVA_THREAD(env);
-    GLASS_POOL_ENTER;
-    {
-        static mach_port_t remoteLayerServerPort = MACH_PORT_NULL;
-        if (remoteLayerServerPort == MACH_PORT_NULL)
-        {
-            remoteLayerServerPort = RemoteLayerStartServer();
-        }
-        NSString *remoteLayerServerName = RemoteLayerGetServerName(remoteLayerServerPort);
-        name = (*env)->NewStringUTF(env, [remoteLayerServerName UTF8String]);
-    }
-    GLASS_POOL_EXIT;
-    GLASS_CHECK_EXCEPTION(env);
-
-    return name;
 }
 
 /*
@@ -1067,14 +1080,14 @@ JNIEXPORT jboolean JNICALL Java_com_sun_glass_ui_mac_MacApplication__1supportsSy
 
 /*
  * Class:     com_sun_glass_ui_mac_MacApplication
- * Method:    _isNormalTaskbarApp
+ * Method:    _isTriggerReactivation
  * Signature: ()Z;
  */
-JNIEXPORT jboolean JNICALL Java_com_sun_glass_ui_mac_MacApplication__1isNormalTaskbarApp
+JNIEXPORT jboolean JNICALL Java_com_sun_glass_ui_mac_MacApplication__1isTriggerReactivation
 (JNIEnv *env, jobject japplication)
 {
-    LOG("Java_com_sun_glass_ui_mac_MacApplication__1isNormalTaskbarApp");
-    return isNormalTaskbarApp;
+    LOG("Java_com_sun_glass_ui_mac_MacApplication__1isTriggerReactivation");
+    return triggerReactivation;
 }
 
 /*

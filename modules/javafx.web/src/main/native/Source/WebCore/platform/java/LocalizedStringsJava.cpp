@@ -627,6 +627,12 @@ String validationMessagePatternMismatchText()
     return getLocalizedProperty("validationMessagePatternMismatchText"_s);
 }
 
+String validationMessagePatternMismatchText(const String& title)
+{
+    UNUSED_PARAM(title);
+    return validationMessagePatternMismatchText();
+}
+
 String validationMessageTooShortText(int, int)
 {
     notImplemented();
@@ -744,9 +750,21 @@ String pluginTooSmallText()
     return String::fromUTF8("Plug-In too small");
 }
 
-#if USE(CF) && !PLATFORM(WIN)
+
+String pdfDocumentTypeDescription()
+{
+    return WEB_UI_STRING("Portable Document Format", "Description of the primary type supported by the PDF pseudo plug-in.");
+}
+
+String contextMenuItemTagShowMediaStats()
+{
+    return WEB_UI_STRING("Show Media Stats", "Media stats context menu item");
+}
+
+#if USE(CF) && !PLATFORM(JAVA)
 String localizedString(CFStringRef key)
 {
+     UNUSED_PARAM(key);
      notImplemented();
      return String::fromUTF8("localizedString(CFStringRef key)"); //Need to add implementation
 }
