@@ -677,12 +677,15 @@ public abstract class TextInputControl extends Control {
      * Transfers the currently selected range in the text to the clipboard,
      * leaving the current selection.
      */
+
      public void copy() {
         final String selectedText = getSelectedText();
         if (selectedText.length() > 0) {
             final ClipboardContent content = new ClipboardContent();
             content.putString(selectedText);
-            Clipboard.getSystemClipboard().setContent(content);
+
+            Clipboard board = this.getScene().getClipboard();
+            board.setContent(content);
         }
     }
 

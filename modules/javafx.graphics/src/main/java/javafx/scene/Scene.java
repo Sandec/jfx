@@ -102,6 +102,7 @@ import com.sun.javafx.stage.WindowHelper;
 import com.sun.javafx.scene.input.ClipboardHelper;
 import com.sun.javafx.scene.input.TouchPointHelper;
 import java.lang.ref.WeakReference;
+import java.util.function.Function;
 
 /**
  * The JavaFX {@code Scene} class is the container for all content in a scene graph.
@@ -175,6 +176,14 @@ root.getChildren().add(r);
  */
 @DefaultProperty("root")
 public class Scene implements EventTarget {
+
+    public static Function<Scene,Clipboard> clipboardMethod = (scene) -> {
+        Clipboard.getSystemClipboard();
+    };
+
+    public Clipboard getClipboard() {
+        return clipboardMethod.apply(this);
+    }
 
     private double widthSetByUser = -1.0;
     private double heightSetByUser = -1.0;
