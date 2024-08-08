@@ -64,7 +64,6 @@ import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
@@ -177,12 +176,10 @@ root.getChildren().add(r);
 @DefaultProperty("root")
 public class Scene implements EventTarget {
 
-    public static Function<Scene,Clipboard> clipboardMethod = (scene) -> {
-        Clipboard.getSystemClipboard();
-    };
+    public static Function<Scene, Clipboard> provideClipboard = (scene) -> Clipboard.getSystemClipboard();
 
     public Clipboard getClipboard() {
-        return clipboardMethod.apply(this);
+        return provideClipboard.apply(this);
     }
 
     private double widthSetByUser = -1.0;

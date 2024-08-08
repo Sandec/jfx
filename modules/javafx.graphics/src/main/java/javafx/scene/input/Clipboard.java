@@ -190,8 +190,7 @@ public class Clipboard {
     @SuppressWarnings("removal")
     private final AccessControlContext acc = AccessController.getContext();
 
-
-    public static java.util.function.Supplier<Clipboard> getSystemClipboardFun = () -> {
+    public static java.util.function.Supplier<Clipboard> provideSystemClipboard = () -> {
         try {
             PermissionHelper.checkClipboardPermission();
             return getSystemClipboardImpl();
@@ -199,13 +198,14 @@ public class Clipboard {
             return getLocalClipboardImpl();
         }
     };
+
     /**
      * Gets the current system clipboard, through which data can be stored and
      * retrieved. There is ever only one system clipboard for a JavaFX application.
      * @return The single system clipboard, used for cut / copy / paste operations
      */
     public static Clipboard getSystemClipboard() {
-        getSystemClipboardFun.get();
+        return provideSystemClipboard.get();
     }
 
     TKClipboard peer;
