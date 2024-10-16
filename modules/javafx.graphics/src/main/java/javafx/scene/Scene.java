@@ -772,6 +772,11 @@ public class Scene implements EventTarget {
         postLayoutPulseListeners.add(r);
     }
 
+    /**
+     * Adds a listener to be called before each rendering pulse.
+     *
+     * @param r the {@code Runnable} to be called
+     */
     public final void addPreRenderPulseListener(Runnable r) {
         Toolkit.getToolkit().checkFxUserThread();
 
@@ -783,7 +788,6 @@ public class Scene implements EventTarget {
         }
         preRenderPulseListeners.add(r);
     }
-
 
     /**
      * Removes a previously registered scene post layout pulse listener from listening to
@@ -809,6 +813,11 @@ public class Scene implements EventTarget {
         postLayoutPulseListeners.remove(r);
     }
 
+    /**
+     * Removes a listener that was previously added to be called before each rendering pulse.
+     *
+     * @param r the {@code Runnable} to be removed
+     */
     public final void removePreRenderPulseListener(Runnable r) {
         Toolkit.getToolkit().checkFxUserThread();
 
