@@ -561,6 +561,9 @@ public class Image {
         return platformImage;
     }
 
+    /**
+     * A runnable that is invoked when the image becomes dirty.
+     */
     public Runnable onDirty = null;
     void pixelsDirty() {
         platformImagePropertyImpl().fireValueChangedEvent();

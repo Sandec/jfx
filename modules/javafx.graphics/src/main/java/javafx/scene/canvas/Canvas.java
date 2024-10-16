@@ -278,23 +278,47 @@ public class Canvas extends Node {
         return bounds;
     }
 
+    /**
+     * Default implementation of the {@link CanvasHelper.CanvasAccessor} interface.
+     * Provides access to internal methods of the {@code Canvas} class.
+     */
     public static class DefaultCanvasAccessor implements CanvasHelper.CanvasAccessor {
+
+        /**
+         * Constructs a new instance of {@code DefaultCanvasAccessor}.
+         */
+        public DefaultCanvasAccessor() {
+            // do nothing
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public NGNode doCreatePeer(Node node) {
             return ((Canvas) node).doCreatePeer();
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public void doUpdatePeer(Node node) {
             ((Canvas) node).doUpdatePeer();
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public BaseBounds doComputeGeomBounds(Node node,
                                               BaseBounds bounds, BaseTransform tx) {
             return ((Canvas) node).doComputeGeomBounds(bounds, tx);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public boolean doComputeContains(Node node, double localX, double localY) {
             return ((Canvas) node).doComputeContains(localX, localY);
