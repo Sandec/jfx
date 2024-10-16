@@ -83,10 +83,44 @@ public class CanvasHelper extends NodeHelper {
         canvasAccessor = newAccessor;
     }
 
+    /**
+     * Interface defining methods to access and manipulate internal functionalities of {@code Canvas}.
+     */
     public interface CanvasAccessor {
+
+        /**
+         * Creates the peer node for the specified {@code Node}.
+         *
+         * @param node the {@code Node} for which to create the peer
+         * @return the created {@code NGNode} peer
+         */
         NGNode doCreatePeer(Node node);
+
+        /**
+         * Updates the peer node for the specified {@code Node}.
+         *
+         * @param node the {@code Node} to update
+         */
         void doUpdatePeer(Node node);
+
+        /**
+         * Computes the geometric bounds of the specified {@code Node}.
+         *
+         * @param node the {@code Node} whose bounds are to be computed
+         * @param bounds the {@code BaseBounds} object to store the result
+         * @param tx the {@code BaseTransform} to apply
+         * @return the computed {@code BaseBounds}
+         */
         BaseBounds doComputeGeomBounds(Node node, BaseBounds bounds, BaseTransform tx);
+
+        /**
+         * Determines whether the specified point is contained within the {@code Node}.
+         *
+         * @param node the {@code Node} to check
+         * @param localX the x-coordinate of the point
+         * @param localY the y-coordinate of the point
+         * @return {@code true} if the point is within the {@code Node}; {@code false} otherwise
+         */
         boolean doComputeContains(Node node, double localX, double localY);
     }
 
