@@ -38,6 +38,9 @@ import javafx.scene.input.KeyCode;
  */
 public final class Platform {
 
+    /** This is a placeholder for the actual implementation. */
+    public static java.util.function.Function<ConditionalFeature,Optional<Boolean>> overwriteIsSupported = (feature) -> Optional.empty();
+
     // To prevent instantiation
     private Platform() {
     }
@@ -265,7 +268,7 @@ public final class Platform {
      * platform, otherwise false
      */
     public static boolean isSupported(ConditionalFeature feature) {
-        return PlatformImpl.isSupported(feature);
+        return overwriteIsSupported.apply(feature).orElseGet(() -> PlatformImpl.isSupported(feature));
     }
 
     /**
