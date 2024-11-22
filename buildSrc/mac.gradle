@@ -126,6 +126,7 @@ def commonParams = [
         "-mmacosx-version-min=$MACOSX_MIN_VERSION",
         "-isysroot", "$MACOSX_SDK_PATH",
         "-iframework$MACOSX_SDK_PATH/System/Library/Frameworks",
+        "-Wno-int-conversion",
         "-arch", "$TARGET_ARCH"]
 
 if (hasProperty('TARGET_ARCH')) {
