@@ -34,8 +34,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public abstract class Window {
+
+    public static Consumer<Window> requestFocusOverride = (window) -> {
+        // Default implementation does nothing
+    };
 
     public static class EventHandler {
         public void handleWindowEvent(Window window, long time, int type) {
@@ -714,6 +719,7 @@ public abstract class Window {
             return false;
         }
 
+        requestFocusOverride.accept(this);
         return _requestFocus(this.ptr, event);
     }
 
