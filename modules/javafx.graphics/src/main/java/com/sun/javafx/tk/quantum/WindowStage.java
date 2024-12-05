@@ -494,6 +494,9 @@ public class WindowStage extends GlassStage {
 
         //shrink the image and convert the format to INT_ARGB_PRE
         ByteBuffer buf = (ByteBuffer) image.getPixelBuffer();
+        if(buf == null) {
+            return; // JPro removed the buffer to reduce memory usage.
+        }
         byte bytes[] = new byte[buf.limit()];
 
         int iheight = image.getHeight();
