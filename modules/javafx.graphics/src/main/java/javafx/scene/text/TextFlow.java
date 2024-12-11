@@ -154,6 +154,9 @@ import javafx.css.StyleableProperty;
  */
 public class TextFlow extends Pane {
 
+    /**
+     * Used by jpro
+     */
     public java.lang.Runnable runsUpdatedLambda = () -> {};
 
     private TextLayout layout;
