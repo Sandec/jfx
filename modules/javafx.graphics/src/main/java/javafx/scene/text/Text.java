@@ -126,6 +126,10 @@ text.setText("The quick brown fox jumps over the lazy dog");
  */
 @DefaultProperty("text")
 public class Text extends Shape {
+
+    /**
+     * Used by jpro
+     */
     public java.lang.Runnable runsUpdatedLambda = () -> {};
     static {
         TextHelper.setTextAccessor(new TextHelper.TextAccessor() {
