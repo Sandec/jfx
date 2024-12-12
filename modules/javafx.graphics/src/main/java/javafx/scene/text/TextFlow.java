@@ -154,6 +154,11 @@ import javafx.css.StyleableProperty;
  */
 public class TextFlow extends Pane {
 
+    /**
+     * Used by jpro
+     */
+    public java.lang.Runnable runsUpdatedLambda = () -> {};
+
     private TextLayout layout;
     private boolean needsContent;
     private boolean inLayout;
@@ -360,6 +365,7 @@ public class TextFlow extends Pane {
                             top + spanBounds.getMinY());
                 }
             }
+            runsUpdatedLambda.run();
         } finally {
             inLayout = false;
         }
