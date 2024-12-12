@@ -127,6 +127,11 @@ text.setText("The quick brown fox jumps over the lazy dog");
  */
 @DefaultProperty("text")
 public class Text extends Shape {
+
+    /**
+     * Used by jpro
+     */
+    public java.lang.Runnable runsUpdatedLambda = () -> {};
     static {
         TextHelper.setTextAccessor(new TextHelper.TextAccessor() {
             @Override
@@ -336,6 +341,7 @@ public class Text extends Shape {
             }
         }
         spanBoundsInvalid = true;
+        runsUpdatedLambda.run();
 
         /* Sometimes a property change in the text node will causes layout in
          * text flow. In this case all the dirty bits are already clear and no
@@ -393,6 +399,7 @@ public class Text extends Shape {
         } else {
             TextLayout layout = getTextLayout();
             textRuns = layout.getRuns();
+            runsUpdatedLambda.run();
         }
         return textRuns;
     }
