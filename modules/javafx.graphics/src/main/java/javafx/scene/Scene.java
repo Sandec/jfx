@@ -182,6 +182,13 @@ root.getChildren().add(r);
 @DefaultProperty("root")
 public class Scene implements EventTarget {
 
+    /**
+     * Dummy javadoc.
+     */
+    public static java.util.function.Function<EventTarget,KeyCode> jproGetShortcutKey = (target) -> {
+        return Toolkit.getToolkit().getPlatformShortcutKey();
+    };
+
     private double widthSetByUser = -1.0;
     private double heightSetByUser = -1.0;
     private boolean sizeInitialized = false;

@@ -57,6 +57,8 @@ public class KeyBinding {
     private OptionalBoolean ctrl = FALSE;
     private OptionalBoolean alt = FALSE;
     private OptionalBoolean meta = FALSE;
+    private OptionalBoolean shortcut = FALSE;
+    // Set SHORTCUT to TRUE if the shortcut key is pressed
 
     public KeyBinding(KeyCode code) {
         this(code, null);
@@ -112,6 +114,9 @@ public class KeyBinding {
     }
 
     public final KeyBinding shortcut() {
+        shortcut = TRUE;
+        return this;
+        /*
         switch (Toolkit.getToolkit().getPlatformShortcutKey()) {
             case SHIFT:
                 return shift();
@@ -127,7 +132,7 @@ public class KeyBinding {
 
             default:
                 return this;
-        }
+        }*/
     }
 
 
@@ -146,6 +151,8 @@ public class KeyBinding {
         if (!ctrl.equals(event.isControlDown())) return 0; else if (ctrl != ANY) s++;
         if (!alt.equals(event.isAltDown())) return 0; else if (alt != ANY) s++;
         if (!meta.equals(event.isMetaDown())) return 0; else if (meta != ANY) s++;
+        if (!shortcut.equals(event.isShortcutDown())) return 0; else if (meta != ANY) s++;
+        // shortcut here if (!meta.equals(event.isMetaDown())) return 0; else if (meta != ANY) s++;
         if (eventType != null && eventType != event.getEventType()) return 0; else s++;
         // We can now trivially accept it
         return s;
@@ -155,7 +162,7 @@ public class KeyBinding {
     @Override public String toString() {
         return "KeyBinding [code=" + code + ", shift=" + shift +
                 ", ctrl=" + ctrl + ", alt=" + alt +
-                ", meta=" + meta + ", type=" + eventType + "]";
+                ", meta=" + meta + ", shortcut=" + shortcut + ", type=" + eventType + "]";
     }
 
     /** {@inheritDoc} */

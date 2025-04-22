@@ -387,7 +387,7 @@ public class GestureEvent extends InputEvent {
      *      otherwise
      */
     public final boolean isShortcutDown() {
-        switch (Toolkit.getToolkit().getPlatformShortcutKey()) {
+        switch (javafx.scene.Scene.jproGetShortcutKey.apply(getTarget())) {
             case SHIFT:
                 return shiftDown;
 

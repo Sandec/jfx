@@ -26,6 +26,8 @@
 package javafx.scene.input;
 
 import com.sun.javafx.tk.Toolkit;
+import javafx.scene.Scene;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -227,8 +229,9 @@ public abstract class KeyCombination {
      *      otherwise
      */
     public boolean match(final KeyEvent event) {
-        final KeyCode shortcutKey =
-                Toolkit.getToolkit().getPlatformShortcutKey();
+        final KeyCode shortcutKey = Scene.jproGetShortcutKey.apply(event.getTarget());
+        //final KeyCode shortcutKey =
+        //        Toolkit.getToolkit().getPlatformShortcutKey();
         return test(KeyCode.SHIFT, shift, shortcutKey, shortcut,
                     event.isShiftDown())
                 && test(KeyCode.CONTROL, control, shortcutKey, shortcut,
