@@ -294,7 +294,8 @@ public abstract class TextInputControlBehavior<T extends TextInputControl> exten
                         KeyBinding newkb = new KeyBinding(newCode).shift(kb.getShift())
                                                                   .ctrl(kb.getCtrl())
                                                                   .alt(kb.getAlt())
-                                                                  .meta(kb.getMeta());
+                                                                  .meta(kb.getMeta())
+                                                                  .shortcut(kb.getShortcut());
                         tmpMap.getMappings().add(new KeyMapping(newkb, mapping.getEventHandler()));
                     }
                 }
