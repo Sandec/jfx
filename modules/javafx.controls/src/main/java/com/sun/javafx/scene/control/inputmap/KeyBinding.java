@@ -56,7 +56,7 @@ public class KeyBinding {
     private OptionalBoolean ctrl = FALSE;
     private OptionalBoolean alt = FALSE;
     private OptionalBoolean meta = FALSE;
-    private OptionalBoolean shortcut = FALSE;
+    private OptionalBoolean shortcut = ANY;
     // Set SHORTCUT to TRUE if the shortcut key is pressed
 
     public KeyBinding(KeyCode code) {
@@ -143,6 +143,10 @@ public class KeyBinding {
             }
         }*/
     }
+    public final KeyBinding shortcut(OptionalBoolean value) {
+        shortcut = value;
+        return this;
+    }
 
 
 
@@ -152,16 +156,48 @@ public class KeyBinding {
     public final OptionalBoolean getCtrl() { return ctrl; }
     public final OptionalBoolean getAlt() { return alt; }
     public final OptionalBoolean getMeta() { return meta; }
+    public final OptionalBoolean getShortcut() { return shortcut; }
 
     public int getSpecificity(KeyEvent event) {
         int s = 0;
-        if (code != null && code != event.getCode()) return 0; else s = 1;
-        if (!shift.equals(event.isShiftDown())) return 0; else if (shift != ANY) s++;
-        if (!ctrl.equals(event.isControlDown())) return 0; else if (ctrl != ANY) s++;
-        if (!alt.equals(event.isAltDown())) return 0; else if (alt != ANY) s++;
-        if (!meta.equals(event.isMetaDown())) return 0; else if (meta != ANY) s++;
-        if (!shortcut.equals(event.isShortcutDown())) return 0; else if (meta != ANY) s++;
-        // shortcut here if (!meta.equals(event.isMetaDown())) return 0; else if (meta != ANY) s++;
+
+        // Check KeyCode
+        if (code != null) {
+            if (code != event.getCode()) return 0;
+            else s++;
+        }
+
+        // Evaluate shortcut dynamically from Toolkit
+        KeyCode shortcutKey = javafx.scene.Scene.jproGetShortcutKey.apply(event.getTarget());
+        boolean shortcutDown = event.isShortcutDown();
+
+        // Shortcut-specific handling (reset ctrl/meta according to shortcut)
+        OptionalBoolean effectiveCtrl = this.ctrl;
+        OptionalBoolean effectiveMeta = this.meta;
+        OptionalBoolean effectiveAlt = this.alt;
+        OptionalBoolean effectiveShift = this.shift;
+
+        if (shortcut == TRUE) {
+            // Adjust modifier keys to ANY if shortcut is pressed
+            switch (shortcutKey) {
+                case CONTROL: effectiveCtrl = ANY; break;
+                case META: effectiveMeta = ANY; break;
+                case ALT: effectiveAlt = ANY; break;
+                case SHIFT: effectiveShift = ANY; break;
+                default: break;
+            }
+        }
+
+        // Check modifiers
+        if (!effectiveShift.equals(event.isShiftDown())) return 0; else if (effectiveShift != ANY) s++;
+        if (!effectiveCtrl.equals(event.isControlDown())) return 0; else if (effectiveCtrl != ANY) s++;
+        if (!effectiveAlt.equals(event.isAltDown())) return 0; else if (effectiveAlt != ANY) s++;
+        if (!effectiveMeta.equals(event.isMetaDown())) return 0; else if (effectiveMeta != ANY) s++;
+
+        // Check Shortcut explicitly
+        if (!shortcut.equals(shortcutDown)) return 0; else if (shortcut != ANY) s++;
+
+        // Check EventType
         if (eventType != null && eventType != event.getEventType()) return 0; else s++;
         // We can now trivially accept it
         return s;
@@ -184,12 +220,13 @@ public class KeyBinding {
                 Objects.equals(getShift(), that.getShift()) &&
                 Objects.equals(getCtrl(), that.getCtrl()) &&
                 Objects.equals(getAlt(), that.getAlt()) &&
-                Objects.equals(getMeta(), that.getMeta());
+                Objects.equals(getMeta(), that.getMeta()) &&
+                Objects.equals(getShortcut(), that.getShortcut());
     }
 
     /** {@inheritDoc} */
     @Override public int hashCode() {
-        return Objects.hash(getCode(), eventType, getShift(), getCtrl(), getAlt(), getMeta());
+        return Objects.hash(getCode(), eventType, getShift(), getCtrl(), getAlt(), getMeta(), getShortcut());
     }
 
     public static KeyBinding toKeyBinding(KeyEvent keyEvent) {
