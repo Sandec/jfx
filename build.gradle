@@ -464,6 +464,8 @@ if (IS_STATIC_BUILD && IS_COMPILE_MEDIA) {
 // aarch64 as -arch parameter.
 defineProperty("TARGET_ARCH", (IS_MAC && IS_AARCH64) ? "arm64" : OS_ARCH)
 
+defineProperty("CLASSIFIER_POSTFIX", "")
+
 // BUILD_TOOLS_DOWNLOAD_SCRIPT specifies a path of a gradle script which downloads
 // required build tools.
 defineProperty("BUILD_TOOLS_DOWNLOAD_SCRIPT", "")
@@ -672,22 +674,17 @@ def buildTimestamp = zonedTime.format(formatter)
 defineProperty("BUILD_TIMESTAMP", buildTimestamp)
 def relSuffix = ""
 def relOpt = ""
-if (HUDSON_JOB_NAME == "not_hudson") {
-    relSuffix = "-internal"
-    relOpt = "-${buildTimestamp}"
+if (IS_MILESTONE_FCS) {
+    if (jfxExperimentalFeatureName != "") {
+        fail("An experimental feature branch should not be used for FCS build")
+    }
+    relSuffix = ""
 } else {
-    if (IS_MILESTONE_FCS) {
-        if (jfxExperimentalFeatureName != "") {
-            fail("An experimental feature branch should not be used for FCS build")
-        }
-        relSuffix = ""
+    if (jfxExperimentalFeatureName != "") {
+        relSuffix = "-${jfxExperimentalFeatureName}"
+        relOpt = "-${buildTimestamp}"
     } else {
-        if (jfxExperimentalFeatureName != "") {
-            relSuffix = "-${jfxExperimentalFeatureName}"
-            relOpt = "-${buildTimestamp}"
-        } else {
-            relSuffix = jfxReleaseSuffix
-        }
+        relSuffix = jfxReleaseSuffix
     }
 }
 defineProperty("RELEASE_SUFFIX", relSuffix)
@@ -1820,7 +1817,7 @@ void addMavenPublication(Project project, List<String> projectDependencies) {
                     afterEvaluate {
                         artifact project.tasks."moduleEmptyPublicationJar$t.capital"
                         artifact project.tasks."modularPublicationJar$t.capital" {
-                            archiveClassifier.set("$t.name")
+                            archiveClassifier.set("$t.name" + CLASSIFIER_POSTFIX)
                         }
                     }
 
