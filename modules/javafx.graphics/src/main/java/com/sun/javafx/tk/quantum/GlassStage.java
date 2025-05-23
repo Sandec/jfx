@@ -122,8 +122,10 @@ abstract class GlassStage implements TKStage {
     }
 
     // We do blocking on windows that are backed by WindowStage and EmbeddedStage
+    public boolean enabled = true;
     protected void setPlatformEnabled(boolean enabled) {
         // Overridden in subclasses
+        this.enabled = enabled;
     }
 
     void windowsSetEnabled(boolean enabled) {
