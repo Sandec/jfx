@@ -189,6 +189,12 @@ public class Scene implements EventTarget {
     public static java.util.function.Function<EventTarget,KeyCode> jproGetShortcutKey = (target) -> {
         return Toolkit.getToolkit().getPlatformShortcutKey();
     };
+    /**
+     * Dummy javadoc.
+     */
+    public static java.util.function.Function<EventTarget,Boolean> jproGetIsMacClient = (target) -> {
+        return false;
+    };
 
     private double widthSetByUser = -1.0;
     private double heightSetByUser = -1.0;
