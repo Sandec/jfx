@@ -19,11 +19,14 @@
 #define IN_LIBXML
 #include "libxml.h"
 
+#include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "private/dict.h"
+#include "private/error.h"
+#include "private/globals.h"
 #include "private/threads.h"
 
 #include <libxml/parser.h>
@@ -508,6 +511,15 @@ xmlDictHashQName(unsigned seed, const xmlChar *prefix, const xmlChar *name,
     return(h2 | MAX_HASH_SIZE);
 }
 
+/**
+ * xmlDictComputeHash:
+ * @dict:  dictionary
+ * @string:  C string
+ *
+ * Compute the hash value of a C string.
+ *
+ * Returns the hash value.
+ */
 unsigned
 xmlDictComputeHash(const xmlDict *dict, const xmlChar *string) {
     size_t len;
@@ -516,6 +528,15 @@ xmlDictComputeHash(const xmlDict *dict, const xmlChar *string) {
 
 #define HASH_ROL31(x,n) ((x) << (n) | ((x) & 0x7FFFFFFF) >> (31 - (n)))
 
+/**
+ * xmlDictCombineHash:
+ * @v1:  first hash value
+ * @v2: second hash value
+ *
+ * Combine two hash values.
+ *
+ * Returns the combined hash value.
+ */
 ATTRIBUTE_NO_SANITIZE_INTEGER
 unsigned
 xmlDictCombineHash(unsigned v1, unsigned v2) {
@@ -679,7 +700,7 @@ xmlDictLookupInternal(xmlDictPtr dict, const xmlChar *prefix,
                       const xmlChar *name, int maybeLen, int update) {
     xmlDictEntry *entry = NULL;
     const xmlChar *ret;
-    unsigned hashValue;
+    unsigned hashValue, newSize;
     size_t maxLen, len, plen, klen;
     int found = 0;
 
@@ -706,10 +727,21 @@ xmlDictLookupInternal(xmlDictPtr dict, const xmlChar *prefix,
     /*
      * Check for an existing entry
      */
-    if (dict->size > 0)
+    if (dict->size == 0) {
+        newSize = MIN_HASH_SIZE;
+    } else {
         entry = xmlDictFindEntry(dict, prefix, name, klen, hashValue, &found);
-    if (found)
-        return(entry);
+        if (found)
+            return(entry);
+
+        if (dict->nbElems + 1 > dict->size / MAX_FILL_DENOM * MAX_FILL_NUM) {
+            if (dict->size >= MAX_HASH_SIZE)
+                return(NULL);
+            newSize = dict->size * 2;
+        } else {
+            newSize = 0;
+        }
+    }
 
     if ((dict->subdict != NULL) && (dict->subdict->size > 0)) {
         xmlDictEntry *subEntry;
@@ -733,16 +765,9 @@ xmlDictLookupInternal(xmlDictPtr dict, const xmlChar *prefix,
     /*
      * Grow the hash table if needed
      */
-    if (dict->nbElems + 1 > dict->size / MAX_FILL_DENOM * MAX_FILL_NUM) {
-        unsigned newSize, mask, displ, pos;
+    if (newSize > 0) {
+        unsigned mask, displ, pos;
 
-        if (dict->size == 0) {
-            newSize = MIN_HASH_SIZE;
-        } else {
-            if (dict->size >= MAX_HASH_SIZE)
-                return(NULL);
-            newSize = dict->size * 2;
-        }
         if (xmlDictGrow(dict, newSize) != 0)
             return(NULL);
 
@@ -904,30 +929,97 @@ xmlDictQLookup(xmlDictPtr dict, const xmlChar *prefix, const xmlChar *name) {
  * Pseudo-random generator
  */
 
+#ifdef _WIN32
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+  #include <bcrypt.h>
+#else
+  #if HAVE_DECL_GETENTROPY
+    /* POSIX 2024 */
+    #include <unistd.h>
+    /* Older platforms */
+    #include <sys/random.h>
+  #endif
+  #include <time.h>
+#endif
+
 static xmlMutex xmlRngMutex;
 
 static unsigned globalRngState[2];
 
-#ifdef XML_THREAD_LOCAL
-static XML_THREAD_LOCAL int localRngInitialized = 0;
-static XML_THREAD_LOCAL unsigned localRngState[2];
-#endif
-
+/*
+ * xmlInitRandom:
+ *
+ * Initialize the PRNG.
+ */
 ATTRIBUTE_NO_SANITIZE_INTEGER
 void
 xmlInitRandom(void) {
-    int var;
-
     xmlInitMutex(&xmlRngMutex);
 
-    /* TODO: Get seed values from system PRNG */
+    {
+#ifdef _WIN32
+        NTSTATUS status;
 
-    globalRngState[0] = (unsigned) time(NULL) ^
-                        HASH_ROL((unsigned) (size_t) &xmlInitRandom, 8);
-    globalRngState[1] = HASH_ROL((unsigned) (size_t) &xmlRngMutex, 16) ^
-                        HASH_ROL((unsigned) (size_t) &var, 24);
+        /*
+         * You can find many (recent as of 2025) discussions how
+         * to get a pseudo-random seed on Windows in projects like
+         * Golang, Rust, Chromium and Firefox.
+         *
+         * TODO: Support ProcessPrng available since Windows 10.
+         */
+        status = BCryptGenRandom(NULL, (unsigned char *) globalRngState,
+                                 sizeof(globalRngState),
+                                 BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+        if (!BCRYPT_SUCCESS(status))
+            xmlAbort("libxml2: BCryptGenRandom failed with error code %lu\n",
+                     GetLastError());
+#else
+        int var;
+
+#if HAVE_DECL_GETENTROPY
+        while (1) {
+            if (getentropy(globalRngState, sizeof(globalRngState)) == 0)
+                return;
+
+            /*
+             * This most likely means that libxml2 was compiled on
+             * a system supporting certain system calls and is running
+             * on a system that doesn't support these calls, as can
+             * be the case on Linux.
+             */
+            if (errno == ENOSYS)
+                break;
+
+            /*
+             * We really don't want to fallback to the unsafe PRNG
+             * for possibly accidental reasons, so we abort on any
+             * unknown error.
+             */
+            if (errno != EINTR)
+                xmlAbort("libxml2: getentropy failed with error code %d\n",
+                         errno);
+        }
+#endif
+
+        /*
+         * TODO: Fallback to /dev/urandom for older POSIX systems.
+         */
+        globalRngState[0] =
+                (unsigned) time(NULL) ^
+                HASH_ROL((unsigned) ((size_t) &xmlInitRandom & 0xFFFFFFFF), 8);
+        globalRngState[1] =
+                HASH_ROL((unsigned) ((size_t) &xmlRngMutex & 0xFFFFFFFF), 16) ^
+                HASH_ROL((unsigned) ((size_t) &var & 0xFFFFFFFF), 24);
+#endif
+    }
 }
 
+/*
+ * xmlCleanupRandom:
+ *
+ * Clean up PRNG globals.
+ */
 void
 xmlCleanupRandom(void) {
     xmlCleanupMutex(&xmlRngMutex);
@@ -947,19 +1039,15 @@ xoroshiro64ss(unsigned *s) {
     return(result & 0xFFFFFFFF);
 }
 
+/*
+ * xmlGlobalRandom:
+ *
+ * Generate a pseudo-random value using the global PRNG.
+ *
+ * Returns a random value.
+ */
 unsigned
-xmlRandom(void) {
-#ifdef XML_THREAD_LOCAL
-    if (!localRngInitialized) {
-        xmlMutexLock(&xmlRngMutex);
-        localRngState[0] = xoroshiro64ss(globalRngState);
-        localRngState[1] = xoroshiro64ss(globalRngState);
-        localRngInitialized = 1;
-        xmlMutexUnlock(&xmlRngMutex);
-    }
-
-    return(xoroshiro64ss(localRngState));
-#else
+xmlGlobalRandom(void) {
     unsigned ret;
 
     xmlMutexLock(&xmlRngMutex);
@@ -967,6 +1055,17 @@ xmlRandom(void) {
     xmlMutexUnlock(&xmlRngMutex);
 
     return(ret);
-#endif
+}
+
+/*
+ * xmlRandom:
+ *
+ * Generate a pseudo-random value using the thread-local PRNG.
+ *
+ * Returns a random value.
+ */
+unsigned
+xmlRandom(void) {
+    return(xoroshiro64ss(xmlGetLocalRngState()));
 }
 
