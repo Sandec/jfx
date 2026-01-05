@@ -103,7 +103,7 @@ public class TextAreaBehavior extends TextInputControlBehavior<TextArea> {
 
         // mac os specific mappings
         InputMap<TextArea> macOsInputMap = new InputMap<>(c);
-        macOsInputMap.setInterceptor(e -> !PlatformUtil.isMac());
+        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e.getTarget()));
         macOsInputMap.getMappings().addAll(
             // Mac OS specific mappings
             keyMapping(new KeyBinding(LEFT).shortcut(),  e -> lineStart(false)),
@@ -125,7 +125,7 @@ public class TextAreaBehavior extends TextInputControlBehavior<TextArea> {
 
         // windows / linux specific mappings
         InputMap<TextArea> nonMacOsInputMap = new InputMap<>(c);
-        nonMacOsInputMap.setInterceptor(e -> PlatformUtil.isMac());
+        nonMacOsInputMap.setInterceptor(e -> PlatformUtil.isMac()); // TODO
         nonMacOsInputMap.getMappings().addAll(
             keyMapping(new KeyBinding(UP).ctrl(),           e -> skin.moveCaret(TextUnit.PARAGRAPH, Direction.UP,   false)),
             keyMapping(new KeyBinding(DOWN).ctrl(),         e -> skin.moveCaret(TextUnit.PARAGRAPH, Direction.DOWN, false)),
