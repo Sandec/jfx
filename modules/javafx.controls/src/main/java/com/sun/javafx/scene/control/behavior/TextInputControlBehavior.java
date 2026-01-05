@@ -218,7 +218,7 @@ public abstract class TextInputControlBehavior<T extends TextInputControl> exten
 
         // mac os specific mappings
         InputMap<T> macOsInputMap = new InputMap<>(c);
-        macOsInputMap.setInterceptor(e -> !PlatformUtil.isMac());
+        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e.getTarget()));
         macOsInputMap.getMappings().addAll(
             // Mac OS specific mappings
             keyMapping(new KeyBinding(HOME).shift(), e -> selectHomeExtend()),
@@ -242,7 +242,7 @@ public abstract class TextInputControlBehavior<T extends TextInputControl> exten
 
         // windows / linux specific mappings
         InputMap<T> nonMacOsInputMap = new InputMap<>(c);
-        nonMacOsInputMap.setInterceptor(e -> PlatformUtil.isMac());
+        nonMacOsInputMap.setInterceptor(e -> PlatformUtil.isMac()); // TODO
         nonMacOsInputMap.getMappings().addAll(
             keyMapping(new KeyBinding(HOME).shift(), e -> selectHome()),
             keyMapping(new KeyBinding(END).shift(), e -> selectEnd()),

@@ -87,8 +87,8 @@ public class ButtonBehavior<C extends ButtonBase> extends BehaviorBase<C> {
             new MouseMapping(MouseEvent.MOUSE_EXITED, this::mouseExited),
 
             // on non-Mac OS platforms, we support pressing the ENTER key to activate the button
-            new KeyMapping(new KeyBinding(ENTER, KeyEvent.KEY_PRESSED), this::keyPressed, event -> PlatformUtil.isMac()),
-            new KeyMapping(new KeyBinding(ENTER, KeyEvent.KEY_RELEASED), this::keyReleased, event -> PlatformUtil.isMac())
+            new KeyMapping(new KeyBinding(ENTER, KeyEvent.KEY_PRESSED), this::keyPressed, event -> javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget())), // This is wrong, correct?
+            new KeyMapping(new KeyBinding(ENTER, KeyEvent.KEY_RELEASED), this::keyReleased, event -> javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()))
         );
 
         // Button also cares about focus

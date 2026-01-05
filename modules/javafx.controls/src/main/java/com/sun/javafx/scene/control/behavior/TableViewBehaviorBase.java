@@ -234,13 +234,13 @@ public abstract class TableViewBehaviorBase<C extends Control, T, TC extends Tab
         // create OS-specific child mappings
         // --- mac OS
         InputMap<C> macInputMap = new InputMap<>(control);
-        macInputMap.setInterceptor(event -> !PlatformUtil.isMac());
+        macInputMap.setInterceptor(event -> !javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
         addDefaultMapping(macInputMap, new KeyMapping(new KeyBinding(SPACE).shortcut().ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(tableViewInputMap, macInputMap);
 
         // --- all other platforms
         InputMap<C> otherOsInputMap = new InputMap<>(control);
-        otherOsInputMap.setInterceptor(event -> PlatformUtil.isMac());
+        otherOsInputMap.setInterceptor(event -> javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
         addDefaultMapping(otherOsInputMap, new KeyMapping(new KeyBinding(SPACE).ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(tableViewInputMap, otherOsInputMap);
 

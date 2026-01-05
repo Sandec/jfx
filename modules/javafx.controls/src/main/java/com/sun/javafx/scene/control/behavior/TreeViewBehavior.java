@@ -228,13 +228,13 @@ public class TreeViewBehavior<T> extends BehaviorBase<TreeView<T>> {
         // create OS-specific child mappings
         // --- mac OS
         InputMap<TreeView<T>> macInputMap = new InputMap<>(control);
-        macInputMap.setInterceptor(event -> !PlatformUtil.isMac());
+        macInputMap.setInterceptor(event -> !javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
         addDefaultMapping(macInputMap, new KeyMapping(new KeyBinding(SPACE).shortcut().ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(treeViewInputMap, macInputMap);
 
         // --- all other platforms
         InputMap<TreeView<T>> otherOsInputMap = new InputMap<>(control);
-        otherOsInputMap.setInterceptor(event -> PlatformUtil.isMac());
+        otherOsInputMap.setInterceptor(event -> javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
         addDefaultMapping(otherOsInputMap, new KeyMapping(new KeyBinding(SPACE).ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(treeViewInputMap, otherOsInputMap);
 
