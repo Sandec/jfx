@@ -57,6 +57,10 @@ public class LabeledImpl extends Label {
         labeledImpl.setText(labeled.getText());
         labeled.textProperty().addListener(shuttler);
 
+        labeledImpl.textTruncatedProperty().subscribe(v -> {
+            LabeledHelper.setTextTruncated(labeled, v);
+        });
+
         labeledImpl.setGraphic(labeled.getGraphic());
         labeled.graphicProperty().addListener(shuttler);
 
