@@ -1326,7 +1326,17 @@ public class NGCanvas extends NGNode {
                 float dy = buf.getFloat();
                 float dw = buf.getFloat();
                 float dh = buf.getFloat();
-                Image img = (Image) buf.getObject();
+                // JPro fork: GraphicsContext puts javafx.scene.image.Image
+                // (not com.sun.prism.Image) into the buffer so that JPro's
+                // serializer can extract image URL metadata. Convert here.
+                Object imgObj = buf.getObject();
+                Image img;
+                if (imgObj instanceof Image) {
+                    img = (Image) imgObj;
+                } else {
+                    img = (Image) Toolkit.getImageAccessor()
+                        .getPlatformImage((javafx.scene.image.Image) imgObj);
+                }
                 float sx, sy, sw, sh;
                 if (token == DRAW_IMAGE) {
                     sx = sy = 0f;
