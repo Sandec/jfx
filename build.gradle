@@ -3171,6 +3171,7 @@ project(":swt") {
                     exclude "**/*swt*-sources.jar"
                     exclude "**/*swt*-javadoc.jar"
                     includeEmptyDirs = false
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                     rename ".*swt.*jar", "swt-debug\\.jar"
                 }
             }

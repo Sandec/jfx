@@ -291,34 +291,26 @@ public non-sealed class Canvas extends Node {
             // do nothing
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        /** Internal accessor method. */
         @Override
         public NGNode doCreatePeer(Node node) {
             return ((Canvas) node).doCreatePeer();
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        /** Internal accessor method. */
         @Override
         public void doUpdatePeer(Node node) {
             ((Canvas) node).doUpdatePeer();
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        /** Internal accessor method. */
         @Override
         public BaseBounds doComputeGeomBounds(Node node,
                                               BaseBounds bounds, BaseTransform tx) {
             return ((Canvas) node).doComputeGeomBounds(bounds, tx);
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        /** Internal accessor method. */
         @Override
         public boolean doComputeContains(Node node, double localX, double localY) {
             return ((Canvas) node).doComputeContains(localX, localY);
