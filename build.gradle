@@ -3146,6 +3146,7 @@ project(":swt") {
                     from f.getParentFile()
                     include "**/*swt*.jar"
                     includeEmptyDirs = false
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                     rename ".*swt.*jar", "swt-debug\\.jar"
                 }
             }
