@@ -168,7 +168,7 @@ public class KeyBinding {
         }
 
         // Evaluate shortcut dynamically from Toolkit
-        KeyCode shortcutKey = javafx.scene.Scene.jproGetShortcutKey.apply(event.getTarget());
+        KeyCode shortcutKey = javafx.scene.Scene.jproGetShortcutKey.apply(event);
         boolean shortcutDown = event.isShortcutDown();
 
         // Shortcut-specific handling (reset ctrl/meta according to shortcut)
