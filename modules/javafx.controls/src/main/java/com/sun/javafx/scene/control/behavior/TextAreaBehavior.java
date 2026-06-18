@@ -103,7 +103,7 @@ public class TextAreaBehavior extends TextInputControlBehavior<TextArea> {
 
         // mac os specific mappings
         InputMap<TextArea> macOsInputMap = new InputMap<>(c);
-        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e.getTarget()));
+        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e));
         macOsInputMap.getMappings().addAll(
             // Mac OS specific mappings
             keyMapping(new KeyBinding(LEFT).shortcut(),  e -> lineStart(false)),

@@ -229,7 +229,7 @@ public abstract class KeyCombination {
      *      otherwise
      */
     public boolean match(final KeyEvent event) {
-        final KeyCode shortcutKey = Scene.jproGetShortcutKey.apply(event.getTarget());
+        final KeyCode shortcutKey = Scene.jproGetShortcutKey.apply(event);
         //final KeyCode shortcutKey =
         //        Toolkit.getToolkit().getPlatformShortcutKey();
         return test(KeyCode.SHIFT, shift, shortcutKey, shortcut,

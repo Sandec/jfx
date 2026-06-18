@@ -126,13 +126,13 @@ public class ListViewBehavior<T> extends BehaviorBase<ListView<T>> {
         // create OS-specific child mappings
         // --- mac OS
         InputMap<ListView<T>> macInputMap = new InputMap<>(control);
-        macInputMap.setInterceptor(event -> !javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
+        macInputMap.setInterceptor(event -> !javafx.scene.Scene.jproGetIsMacClient.apply(event));
         addDefaultMapping(macInputMap, new KeyMapping(new KeyBinding(SPACE).shortcut().ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(listViewInputMap, macInputMap);
 
         // --- all other platforms
         InputMap<ListView<T>> otherOsInputMap = new InputMap<>(control);
-        otherOsInputMap.setInterceptor(event -> javafx.scene.Scene.jproGetIsMacClient.apply(event.getTarget()));
+        otherOsInputMap.setInterceptor(event -> javafx.scene.Scene.jproGetIsMacClient.apply(event));
         addDefaultMapping(otherOsInputMap, new KeyMapping(new KeyBinding(SPACE).ctrl(), e -> toggleFocusOwnerSelection()));
         addDefaultChildMap(listViewInputMap, otherOsInputMap);
 

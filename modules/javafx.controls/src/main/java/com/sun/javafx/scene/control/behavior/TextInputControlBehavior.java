@@ -218,7 +218,7 @@ public abstract class TextInputControlBehavior<T extends TextInputControl> exten
 
         // mac os specific mappings
         InputMap<T> macOsInputMap = new InputMap<>(c);
-        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e.getTarget()));
+        macOsInputMap.setInterceptor(e -> !javafx.scene.Scene.jproGetIsMacClient.apply(e));
         macOsInputMap.getMappings().addAll(
             // Mac OS specific mappings
             keyMapping(new KeyBinding(HOME).shift(), e -> selectHomeExtend()),
