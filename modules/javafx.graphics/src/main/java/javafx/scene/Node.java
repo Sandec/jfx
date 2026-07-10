@@ -407,6 +407,12 @@ import com.sun.javafx.logging.PlatformLogger.Level;
 @IDProperty("id")
 public abstract class Node implements EventTarget, Styleable {
 
+
+    /**
+     * Dummy javadoc.
+     */
+    public static java.util.function.BiConsumer<Node, AccessibleAttribute> jproAccessibilityObserver = (node, attribute) -> {};
+
     /*
      * Store the singleton instance of the NodeHelper subclass corresponding
      * to the subclass of this instance of Node
@@ -10003,6 +10009,7 @@ public abstract class Node implements EventTarget, Styleable {
         if (accessible != null) {
             accessible.sendNotification(attributes);
         }
+        jproAccessibilityObserver.accept(this, attributes);
     }
 
     Accessible accessible;
