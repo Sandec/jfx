@@ -415,6 +415,12 @@ public abstract sealed class Node
         implements EventTarget, Styleable
         permits AbstractNode, Camera, LightBase, Parent, SubScene, Canvas, ImageView, Shape, Shape3D {
 
+
+    /**
+     * Dummy javadoc.
+     */
+    public static java.util.function.BiConsumer<Node, AccessibleAttribute> jproAccessibilityObserver = (node, attribute) -> {};
+
     /*
      * Store the singleton instance of the NodeHelper subclass corresponding
      * to the subclass of this instance of Node
@@ -10512,6 +10518,7 @@ public abstract sealed class Node
         if (accessible != null) {
             accessible.sendNotification(attributes);
         }
+        jproAccessibilityObserver.accept(this, attributes);
     }
 
     Accessible accessible;
