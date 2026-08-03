@@ -146,6 +146,14 @@ jobs:
           export PATH="$JAVA_HOME/bin:$PATH"
           bash gradlew --info --continue -PTEST_ONLY=true test -x :web:test
 
+      - name: Run FileChooserOwnerClosedTest system test
+        working-directory: jfx
+        run: |
+          set -x
+          export PATH="$JAVA_HOME/bin:$PATH"
+          sudo apt-get update && sudo apt-get install -y xvfb
+          xvfb-run -a bash gradlew --info -PFULL_TEST=true :systemTests:test --tests test.javafx.stage.FileChooserOwnerClosedTest
+
 
   linux_aarch64_build:
     name: Linux aarch64
@@ -230,6 +238,14 @@ jobs:
           # export PATH="$JAVA_HOME/bin:$ANT_HOME/bin:$PATH"
           export PATH="$JAVA_HOME/bin:$PATH"
           bash gradlew --info --continue -PTEST_ONLY=true test -x :web:test
+
+      - name: Run FileChooserOwnerClosedTest system test
+        working-directory: jfx
+        run: |
+          set -x
+          export PATH="$JAVA_HOME/bin:$PATH"
+          sudo apt-get update && sudo apt-get install -y xvfb
+          xvfb-run -a bash gradlew --info -PFULL_TEST=true :systemTests:test --tests test.javafx.stage.FileChooserOwnerClosedTest
 
 
   windows_x64_build:
@@ -336,3 +352,9 @@ jobs:
           $env:Path = "$env:THE_PATH" ;
           echo "Path=$env:Path"
           .\gradlew.bat --info --continue -PTEST_ONLY=true test -x :web:test
+
+      - name: Run FileChooserOwnerClosedTest system test
+        working-directory: jfx
+        run: |
+          $env:Path = "$env:THE_PATH" ;
+          .\gradlew.bat --info -PFULL_TEST=true :systemTests:test --tests test.javafx.stage.FileChooserOwnerClosedTest
