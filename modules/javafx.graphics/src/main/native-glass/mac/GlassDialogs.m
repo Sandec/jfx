@@ -93,8 +93,22 @@
     dd->eventLoop = (*env)->NewGlobalRef(env, jobj);
 
     if (owner) {
+        // AppKit does not invoke the completion handler if the owner window is
+        // closed while the sheet is showing, which would leave the nested event
+        // loop stuck. End the sheet while the owner still exists so the handler
+        // runs and key-window status moves on to the next window.
+        id closeObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:NSWindowWillCloseNotification
+                        object:owner
+                         queue:nil
+                    usingBlock:^(NSNotification *note)
+        {
+            [self->owner endSheet:self->panel returnCode:NSModalResponseCancel];
+        }];
+
         [panel beginSheetModalForWindow: owner completionHandler:^(NSInteger result)
         {
+            [[NSNotificationCenter defaultCenter] removeObserver:closeObserver];
             [dd exitModalWithEnv:env result:result];
         }
         ];
