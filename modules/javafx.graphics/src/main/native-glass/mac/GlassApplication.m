@@ -27,9 +27,9 @@
 #import "com_sun_glass_ui_mac_MacApplication.h"
 #import "com_sun_glass_events_KeyEvent.h"
 
-
 #import "GlassMacros.h"
 #import "GlassApplication.h"
+#import "GlassAccessible.h"
 #import "GlassHelper.h"
 #import "GlassKey.h"
 #import "GlassScreen.h"
@@ -38,6 +38,8 @@
 
 #import "ProcessInfo.h"
 #import <Security/SecRequirement.h>
+
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 //#define VERBOSE
 #ifndef VERBOSE
@@ -262,13 +264,16 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     [pool drain];
     GLASS_CHECK_EXCEPTION(env);
 
-     if (!NSApp.isActive && requiresActivation) {
+    if (!NSApp.isActive && requiresActivation) {
         // As of macOS 14, application gets to the foreground,
         // but it doesn't get activated, so this is needed:
         LOG("-> need to active application");
         dispatch_async(dispatch_get_main_queue(), ^{
-            [NSApp activate];
+            [NSApp performSelector: @selector(activate)];
         });
+        // TODO: performSelector is used only to avoid a compiler
+        // warning with the 13.3 SDK. After updating to SDK 14
+        // this can be converted to a standard call.
     }
 }
 
@@ -611,28 +616,25 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
                 char *path = getenv([property UTF8String]);
                 if (path != NULL)
                 {
+                    BOOL isFolder = NO;
                     NSString *overridenPath = [NSString stringWithFormat:@"%s", path];
-                    if ([[NSFileManager defaultManager] fileExistsAtPath:overridenPath isDirectory:NO] == YES)
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:overridenPath isDirectory:&isFolder] && !isFolder)
                     {
                         iconPath = overridenPath;
                     }
                 }
-                if ([[NSFileManager defaultManager] fileExistsAtPath:iconPath isDirectory:NO] == NO)
-                {
-                    // try again using Java generic icon (this icon might go away eventually ?)
-                    iconPath = [NSString stringWithFormat:@"%s", "/System/Library/Frameworks/JavaVM.framework/Resources/GenericApp.icns"];
-                }
 
                 NSImage *image = nil;
                 {
-                    if ([[NSFileManager defaultManager] fileExistsAtPath:iconPath isDirectory:NO] == YES)
+                    BOOL isFolder = NO;
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:iconPath isDirectory:&isFolder] && !isFolder)
                     {
                         image = [[NSImage alloc] initWithContentsOfFile:iconPath];
                     }
                     if (image == nil)
                     {
-                        // last resort - if still no icon, then ask for an empty standard app icon, which is guranteed to exist
-                        image = [[NSImage imageNamed:@"NSApplicationIcon"] retain];
+                        // last resort - if still no icon, then ask for an empty standard app icon, which is guaranteed to exist
+                        image = [[NSImage imageNamed:@"NSImageNameApplicationIcon"] retain];
                     }
                 }
                 [app setApplicationIconImage:image];
@@ -714,7 +716,11 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         else // event loop is not started
         {
             if ([NSThread isMainThread] == YES) {
-                [glassApp applicationWillFinishLaunching: NULL];
+                // The NSNotification is ignored but the compiler insists on a non-NULL argument.
+                NSNotification* notification = [NSNotification notificationWithName: NSApplicationWillFinishLaunchingNotification
+                    object: NSApp
+                    userInfo: nil];
+                [glassApp applicationWillFinishLaunching: notification];
             } else {
                 [glassApp performSelectorOnMainThread:@selector(applicationWillFinishLaunching:) withObject:NULL waitUntilDone:NO];
             }
@@ -1199,4 +1205,52 @@ JNIEXPORT jint JNICALL Java_com_sun_glass_ui_mac_MacApplication__1getMacKey
     unsigned short macCode = 0;
     GetMacKey(code, &macCode);
     return (macCode & 0xFFFF);
+}
+
+/*
+ * Class:       com_sun_glass_ui_mac_MacApplication
+ * Method:      _openURI
+ * Signature:   (java/lang/String;)I;
+ */
+JNIEXPORT jint JNICALL Java_com_sun_glass_ui_mac_MacApplication__1openURI
+(JNIEnv *env, jclass jClass, jstring uri)
+{
+    __block OSStatus status = noErr;
+
+    GLASS_ASSERT_MAIN_JAVA_THREAD(env);
+    GLASS_POOL_ENTER;
+
+    NSURL *url = [NSURL URLWithString:jStringToNSString(env, uri)];
+
+    NSURL *httpsURL = [NSURL URLWithString:@"https://"];
+    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+    NSURL *defaultBrowser = [workspace URLForApplicationToOpenURL:httpsURL];
+    if (defaultBrowser == nil) {
+        NSLog(@"Default browser not set");
+        return -1;
+    }
+    NSArray<NSURL *> *urls = @[url];
+    NSWorkspaceOpenConfiguration *configuration = [NSWorkspaceOpenConfiguration configuration];
+    configuration.activates = YES;
+    configuration.promptsUserIfNeeded = YES;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(NSEC_PER_SEC)); // 1 second timeout
+
+    [workspace     openURLs:urls
+       withApplicationAtURL:defaultBrowser
+              configuration:configuration
+           completionHandler:^(NSRunningApplication *app, NSError *error) {
+               if (error) {
+                   NSLog(@"Error opening URI %@ : %@", url, error.localizedDescription);
+                   status = (OSStatus) error.code;
+               }
+               dispatch_semaphore_signal(semaphore);
+           }];
+
+    dispatch_semaphore_wait(semaphore, timeout);
+
+    GLASS_POOL_EXIT;
+    GLASS_CHECK_EXCEPTION(env);
+
+    return status;
 }
